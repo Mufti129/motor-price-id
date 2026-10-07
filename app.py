@@ -1251,21 +1251,36 @@ elif menu == "Wholesale & Auction Intelligence (JBA & IBID)":
                     filtered_lots["License_Plate"].str.lower().str.contains(q, na=False)
                 ]
 
-            # Summary Metric Row
-            st.markdown("<br>", unsafe_allow_html=True)
-            k1, k2, k3, k4 = st.columns(4)
-            with k1:
-                st.metric("Total Unit Lot Terfilter", f"{len(filtered_lots):,} Lot")
-            with k2:
-                avg_base = filtered_lots["Base_Limit_Price"].mean() if not filtered_lots.empty else 0
-                st.metric("Rata-rata Floor Limit", f"Rp {avg_base:,.0f}")
-            with k3:
-                sold_lots = filtered_lots[filtered_lots["Status"] == "Sold"]
-                avg_hammer = sold_lots["Hammer_Price"].mean() if not sold_lots.empty else 0
-                st.metric("Rata-rata Ketok Palu (Sold)", f"Rp {avg_hammer:,.0f}")
-            with k4:
-                clearance = (len(sold_lots) / len(filtered_lots) * 100.0) if not filtered_lots.empty else 0
-                st.metric("Clearance Ratio Terjual", f"{clearance:.1f}%")
+            # Summary Metric Row (Proportional Responsive Grid)
+            avg_base = filtered_lots["Base_Limit_Price"].mean() if not filtered_lots.empty else 0
+            sold_lots = filtered_lots[filtered_lots["Status"] == "Sold"]
+            avg_hammer = sold_lots["Hammer_Price"].mean() if not sold_lots.empty else 0
+            clearance = (len(sold_lots) / len(filtered_lots) * 100.0) if not filtered_lots.empty else 0
+
+            st.markdown(f"""
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 15px 0 20px 0;">
+                <div class="pro-metric-card">
+                    <div class="pro-metric-label">TOTAL UNIT LOT TERFILTER</div>
+                    <div class="pro-metric-val" style="font-size: 1.30rem; color: #38bdf8;">{len(filtered_lots):,} Lot</div>
+                    <div class="pro-metric-sub">Katalog JBA & IBID Aktif</div>
+                </div>
+                <div class="pro-metric-card">
+                    <div class="pro-metric-label">RATA-RATA FLOOR LIMIT</div>
+                    <div class="pro-metric-val" style="font-size: 1.30rem; color: #cbd5e1;">Rp {avg_base:,.0f}</div>
+                    <div class="pro-metric-sub">Harga Dasar Pembukaan</div>
+                </div>
+                <div class="pro-metric-card emerald">
+                    <div class="pro-metric-label">RATA-RATA KETOK PALU</div>
+                    <div class="pro-metric-val" style="font-size: 1.30rem; color: #34d399;">Rp {avg_hammer:,.0f}</div>
+                    <div class="pro-metric-sub">Unit Terjual (Sold)</div>
+                </div>
+                <div class="pro-metric-card amber">
+                    <div class="pro-metric-label">CLEARANCE RATIO</div>
+                    <div class="pro-metric-val" style="font-size: 1.30rem; color: #fbbf24;">{clearance:.1f}%</div>
+                    <div class="pro-metric-sub">Tingkat Penjualan Lelang</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
             st.markdown("#### Katalog Detail Lot Hasil Inspeksi Lelang")
             st.dataframe(
