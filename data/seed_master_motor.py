@@ -1,6 +1,6 @@
 """
-Master Data Seeder untuk Katalog Motor Resmi di Indonesia.
-Mencakup Merk, Model, Varian Lengkap, Rentang Tahun Rilis, CC Mesin, Kategori, MSRP Baru, dan Aliases.
+Master Data Seeder untuk Katalog Motor Resmi di Indonesia (12 Tahun Terakhir: 2014 - 2026).
+Riset komprehensif seluruh Merk, Model, Varian Lengkap, CC Mesin, Kategori, MSRP Baru, dan Aliases.
 """
 from models.database import SessionLocal, init_db
 from models.catalog import MasterBrand, MasterModel, MasterVariant
@@ -17,11 +17,12 @@ MASTER_MOTOR_DATA = [
                 "variants": [
                     {"name": "Beat Karburator (Generasi 1)", "start": 2008, "end": 2012, "msrp": 12500000, "aliases": "beat karbu, beat lama, beat gen 1"},
                     {"name": "Beat FI (Injeksi Gen 1)", "start": 2012, "end": 2014, "msrp": 14200000, "aliases": "beat fi lama, beat injeksi 2013 2014"},
-                    {"name": "Beat FI eSP (Generasi 2/3)", "start": 2014, "end": 2020, "msrp": 15500000, "aliases": "beat fi, beat esp, beat cbs iss, beat pop"},
+                    {"name": "Beat FI eSP (Generasi 2/3)", "start": 2014, "end": 2020, "msrp": 15500000, "aliases": "beat fi, beat esp, beat cbs iss"},
+                    {"name": "Beat Pop eSP", "start": 2015, "end": 2019, "msrp": 15100000, "aliases": "beat pop, beat pop esp, beat pop cbs iss"},
                     {"name": "Beat Street eSP (Generasi 1)", "start": 2016, "end": 2020, "msrp": 16800000, "aliases": "beat street lama, beat strit 2017 2018 2019"},
                     {"name": "Beat Street eSAF (Generasi 2)", "start": 2020, "end": 2024, "msrp": 18700000, "aliases": "beat street new, beat street esaf"},
                     {"name": "Beat Deluxe / CBS (eSAF)", "start": 2020, "end": 2024, "msrp": 18200000, "aliases": "beat deluxe, beat esaf, beat cbs baru, all new beat"},
-                    {"name": "Beat All New (Keyless 2024+)", "start": 2024, "end": 2026, "msrp": 19500000, "aliases": "beat smart key, beat 2024, beat keyless, beat deluxe smart key"},
+                    {"name": "Beat All New Smart Key (2024+)", "start": 2024, "end": 2026, "msrp": 19830000, "aliases": "beat smart key, beat 2024, beat keyless, beat deluxe smart key"},
                     {"name": "Beat Street All New (2024+)", "start": 2024, "end": 2026, "msrp": 19300000, "aliases": "beat street 2024, all new beat street"}
                 ]
             },
@@ -39,7 +40,16 @@ MASTER_MOTOR_DATA = [
                     {"name": "Vario 150 eSP Exclusive (Gen 1)", "start": 2015, "end": 2018, "msrp": 22500000, "aliases": "vario 150 led lama, vario 150 esp 2015 2016 2017"},
                     {"name": "Vario 150 eSP Exclusive / Keyless (Gen 2)", "start": 2018, "end": 2022, "msrp": 24900000, "aliases": "vario 150, vario 150 keyless, vario 150 esp, vario 150 led"},
                     {"name": "Vario 160 CBS", "start": 2022, "end": 2026, "msrp": 27350000, "aliases": "vario 160 cbs, all new vario 160"},
-                    {"name": "Vario 160 ABS", "start": 2022, "end": 2026, "msrp": 30200000, "aliases": "vario 160 abs, vario 160 cakram belakang"}
+                    {"name": "Vario 160 ABS", "start": 2022, "end": 2026, "msrp": 30230000, "aliases": "vario 160 abs, vario 160 cakram belakang"}
+                ]
+            },
+            {
+                "name": "Stylo 160",
+                "category": "Retro Modern Matic",
+                "cc": 160,
+                "variants": [
+                    {"name": "Stylo 160 CBS", "start": 2024, "end": 2026, "msrp": 27550000, "aliases": "honda stylo, stylo 160, stylo cbs, honda stilo"},
+                    {"name": "Stylo 160 ABS (Keyless)", "start": 2024, "end": 2026, "msrp": 30420000, "aliases": "stylo 160 abs, stylo abs smart key, all new stylo"}
                 ]
             },
             {
@@ -55,17 +65,18 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "Genio",
+                "name": "Genio & Spacy",
                 "category": "Matic",
                 "cc": 110,
                 "variants": [
+                    {"name": "Spacy Helm-In (Karbu / PGM-FI)", "start": 2011, "end": 2018, "msrp": 14500000, "aliases": "honda spacy, spacy fi, spacy helm in"},
                     {"name": "Genio CBS / ISS (eSAF Ring 14)", "start": 2019, "end": 2022, "msrp": 17800000, "aliases": "honda genio, genio cbs, genio iss"},
                     {"name": "Genio Facelift (Ring 12)", "start": 2022, "end": 2026, "msrp": 19200000, "aliases": "genio donat, genio new, genio ring 12"}
                 ]
             },
             {
                 "name": "PCX",
-                "category": "Matic",
+                "category": "Maxi Matic",
                 "cc": 160,
                 "variants": [
                     {"name": "PCX 125 CBU Thailand", "start": 2010, "end": 2012, "msrp": 32000000, "aliases": "pcx 125, pcx cbu 125"},
@@ -78,7 +89,7 @@ MASTER_MOTOR_DATA = [
             },
             {
                 "name": "ADV",
-                "category": "Matic",
+                "category": "Adventure Matic",
                 "cc": 160,
                 "variants": [
                     {"name": "ADV 150 (CBS / ABS)", "start": 2019, "end": 2022, "msrp": 34500000, "aliases": "adv 150, adv 150 abs, adv 150 cbs"},
@@ -105,46 +116,59 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "CBR 250RR",
-                "category": "Sport Fairing 2-Cylinder",
+                "name": "CBR 250RR & 250R",
+                "category": "Sport Fairing",
                 "cc": 250,
                 "variants": [
+                    {"name": "CBR 250R 1-Silinder CBU", "start": 2011, "end": 2015, "msrp": 48000000, "aliases": "cbr 250 1 silinder, cbr 250 cbu, cbr 250 non abs"},
                     {"name": "CBR 250RR 2-Silinder (Standard / ABS)", "start": 2016, "end": 2020, "msrp": 65000000, "aliases": "cbr 250rr, cbr 250 2 silinder, cbr250rr abs"},
                     {"name": "CBR 250RR SP Quick Shifter", "start": 2020, "end": 2026, "msrp": 78000000, "aliases": "cbr250rr sp, cbr 250rr quick shifter, cbr250rr qs"}
                 ]
             },
             {
-                "name": "CB150R",
-                "category": "Sport Naked",
+                "name": "CB150R & CB150X",
+                "category": "Sport Naked & Adventure",
                 "cc": 150,
                 "variants": [
                     {"name": "CB150R StreetFire Gen 1", "start": 2012, "end": 2015, "msrp": 23500000, "aliases": "cb150r old, cb streetfire lama"},
                     {"name": "CB150R StreetFire LED Gen 2", "start": 2015, "end": 2021, "msrp": 28000000, "aliases": "cb150r led, cb150r se, cb streetfire"},
-                    {"name": "CB150R StreetFire All New (USD)", "start": 2021, "end": 2026, "msrp": 31500000, "aliases": "all new cb150r, cb150r usd"}
-                ]
-            },
-            {
-                "name": "CB150X",
-                "category": "Adventure Touring",
-                "cc": 150,
-                "variants": [
+                    {"name": "CB150R StreetFire All New (USD)", "start": 2021, "end": 2026, "msrp": 31500000, "aliases": "all new cb150r, cb150r usd"},
                     {"name": "CB150X Adventure Touring", "start": 2021, "end": 2026, "msrp": 33900000, "aliases": "cb150x, cb 150x, cb150 x adventure"}
                 ]
             },
             {
-                "name": "CRF 150L",
-                "category": "Trail / Dual Purpose",
+                "name": "Verza & MegaPro",
+                "category": "Sport Commuter",
                 "cc": 150,
                 "variants": [
-                    {"name": "CRF 150L Injeksi", "start": 2017, "end": 2026, "msrp": 36400000, "aliases": "crf 150, crf 150l, crf150l, honda crf"}
+                    {"name": "MegaPro FI (Monoshock)", "start": 2014, "end": 2018, "msrp": 21500000, "aliases": "megapro fi, mega pro injeksi, megapro monoshock"},
+                    {"name": "Honda Verza 150 (Gen 1)", "start": 2013, "end": 2018, "msrp": 18500000, "aliases": "verza 150, honda verza, verza sw, verza cw"},
+                    {"name": "CB150 Verza (Gen 2)", "start": 2018, "end": 2026, "msrp": 21900000, "aliases": "cb150 verza, cb verza, all new verza"}
                 ]
             },
             {
-                "name": "Supra X / GTR",
+                "name": "Sonic 150R",
+                "category": "Underbone Ayago",
+                "cc": 150,
+                "variants": [
+                    {"name": "Sonic 150R DOHC 6-Speed", "start": 2015, "end": 2026, "msrp": 25500000, "aliases": "honda sonic, sonic 150, sonic 150r, sonic dohc"}
+                ]
+            },
+            {
+                "name": "CRF 150L & CRF 250",
+                "category": "Trail / Dual Purpose",
+                "cc": 150,
+                "variants": [
+                    {"name": "CRF 150L Injeksi", "start": 2017, "end": 2026, "msrp": 36400000, "aliases": "crf 150, crf 150l, crf150l, honda crf"},
+                    {"name": "CRF 250 Rally", "start": 2017, "end": 2026, "msrp": 92900000, "aliases": "crf 250 rally, crf250 rally, crf rally 250"}
+                ]
+            },
+            {
+                "name": "Supra Series & Revo",
                 "category": "Bebek / Moped",
                 "cc": 125,
                 "variants": [
-                    {"name": "Supra X 125 Helm-In FI", "start": 2011, "end": 2018, "msrp": 17500000, "aliases": "supra helm in, supra 125 helm in"},
+                    {"name": "Revo 110 FI (Fit / X)", "start": 2014, "end": 2026, "msrp": 16500000, "aliases": "revo fi, revo x, revo fit, honda revo"},
                     {"name": "Supra X 125 FI (CW / SW)", "start": 2014, "end": 2026, "msrp": 19100000, "aliases": "supra x 125, supra x 125 fi, supra batman"},
                     {"name": "Supra GTR 150", "start": 2016, "end": 2026, "msrp": 25500000, "aliases": "supra gtr, supra gtr 150, gtr 150"}
                 ]
@@ -157,7 +181,7 @@ MASTER_MOTOR_DATA = [
         "models": [
             {
                 "name": "NMAX",
-                "category": "Matic",
+                "category": "Maxi Matic",
                 "cc": 155,
                 "variants": [
                     {"name": "NMAX 155 Old (Generasi 1 Non-ABS / ABS)", "start": 2015, "end": 2019, "msrp": 26500000, "aliases": "nmax lama, nmax old, nmax 2016 2017 2018 2019, nmax non abs"},
@@ -168,25 +192,27 @@ MASTER_MOTOR_DATA = [
             },
             {
                 "name": "Aerox",
-                "category": "Matic",
+                "category": "Maxi Sport Matic",
                 "cc": 155,
                 "variants": [
+                    {"name": "Aerox 125 LC", "start": 2016, "end": 2017, "msrp": 18200000, "aliases": "aerox 125, aerox 125 lc"},
                     {"name": "Aerox 155 VVA Old (Standard / R / S-Version)", "start": 2017, "end": 2020, "msrp": 24500000, "aliases": "aerox old, aerox lama, aerox 155 2017 2018 2019, aerox tipe r, aerox keyless"},
                     {"name": "Aerox 155 Connected / CyberCity / ABS", "start": 2020, "end": 2026, "msrp": 28500000, "aliases": "all new aerox, aerox connected, aerox cybercity, aerox abs 2021 2022 2023"}
                 ]
             },
             {
-                "name": "XMAX",
+                "name": "XMAX & TMAX",
                 "category": "Maxi Matic",
                 "cc": 250,
                 "variants": [
                     {"name": "XMAX 250 Old", "start": 2017, "end": 2022, "msrp": 62500000, "aliases": "xmax 250, xmax lama, xmax 2018 2019 2020"},
-                    {"name": "XMAX 250 Connected / Tech MAX", "start": 2022, "end": 2026, "msrp": 66500000, "aliases": "xmax connected, xmax new, xmax tech max"}
+                    {"name": "XMAX 250 Connected / Tech MAX", "start": 2022, "end": 2026, "msrp": 66500000, "aliases": "xmax connected, xmax new, xmax tech max"},
+                    {"name": "TMAX 530 DX CBU", "start": 2014, "end": 2020, "msrp": 319000000, "aliases": "tmax 530, yamaha tmax, tmax dx"}
                 ]
             },
             {
                 "name": "Lexi",
-                "category": "Matic",
+                "category": "Maxi Matic",
                 "cc": 125,
                 "variants": [
                     {"name": "Lexi 125 VVA (Standard / S / ABS)", "start": 2018, "end": 2023, "msrp": 22500000, "aliases": "yamaha lexi, lexi 125, lexi s, lexi abs"},
@@ -194,26 +220,30 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "Fazzio",
-                "category": "Classy Matic",
+                "name": "Classy (Fazzio & Filano)",
+                "category": "Classy Hybrid Matic",
                 "cc": 125,
                 "variants": [
-                    {"name": "Fazzio Hybrid-Connected (Neo / Lux)", "start": 2022, "end": 2026, "msrp": 22800000, "aliases": "fazzio, fazio, fazzio hybrid, fazzio lux, fazzio neo"}
-                ]
-            },
-            {
-                "name": "Grand Filano",
-                "category": "Classy Matic",
-                "cc": 125,
-                "variants": [
+                    {"name": "Fazzio Hybrid-Connected (Neo / Lux)", "start": 2022, "end": 2026, "msrp": 22800000, "aliases": "fazzio, fazio, fazzio hybrid, fazzio lux, fazzio neo"},
                     {"name": "Grand Filano Hybrid-Connected (Neo / Lux)", "start": 2023, "end": 2026, "msrp": 27500000, "aliases": "grand filano, filano hybrid, filano lux"}
                 ]
             },
             {
-                "name": "Gear 125 & FreeGo",
-                "category": "Matic",
+                "name": "X-Ride & Fino",
+                "category": "Matic Lifestyle",
                 "cc": 125,
                 "variants": [
+                    {"name": "X-Ride 115 YMJET-FI", "start": 2013, "end": 2017, "msrp": 15300000, "aliases": "xride 115, x-ride lama, xride karbu fi"},
+                    {"name": "X-Ride 125 Blue Core", "start": 2017, "end": 2026, "msrp": 20200000, "aliases": "xride 125, x-ride 125, all new xride"},
+                    {"name": "Fino 125 Blue Core (Premium / Grande)", "start": 2016, "end": 2024, "msrp": 20150000, "aliases": "yamaha fino, fino 125, fino grande, fino sporty"}
+                ]
+            },
+            {
+                "name": "Gear, FreeGo & Soul GT",
+                "category": "Matic Harian",
+                "cc": 125,
+                "variants": [
+                    {"name": "Soul GT 125 Blue Core (LED)", "start": 2015, "end": 2022, "msrp": 17800000, "aliases": "soul gt 125, all new soul gt, soul gt led"},
                     {"name": "Gear 125 (Standard / S-Version)", "start": 2020, "end": 2026, "msrp": 18200000, "aliases": "gear 125, yamaha gear, gear 125 s"},
                     {"name": "FreeGo 125 (Old / Connected)", "start": 2018, "end": 2026, "msrp": 21400000, "aliases": "freego, freego 125, freego connected"}
                 ]
@@ -225,7 +255,7 @@ MASTER_MOTOR_DATA = [
                 "variants": [
                     {"name": "Mio Sporty / Smile Karbu", "start": 2004, "end": 2012, "msrp": 12000000, "aliases": "mio sporty, mio smile, mio karbu, mio 5tl"},
                     {"name": "Mio J / Mio GT", "start": 2012, "end": 2015, "msrp": 13500000, "aliases": "mio j, mio gt, mio ymjet fi"},
-                    {"name": "Mio M3 125 Blue Core", "start": 2015, "end": 2024, "msrp": 17500000, "aliases": "mio m3, mio 125, mio m3 aks, mio z"}
+                    {"name": "Mio M3 125 Blue Core", "start": 2015, "end": 2024, "msrp": 17500000, "aliases": "mio m3, mio 125, mio m3 aks, mio z, mio s"}
                 ]
             },
             {
@@ -256,10 +286,11 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "Vixion & MT-15",
+                "name": "Vixion, Byson & MT-15",
                 "category": "Sport Naked",
                 "cc": 155,
                 "variants": [
+                    {"name": "Byson FI 150", "start": 2015, "end": 2020, "msrp": 22950000, "aliases": "byson fi, yamaha byson, byson injeksi"},
                     {"name": "Vixion New Lightning / Advance (NVL / NVA)", "start": 2012, "end": 2017, "msrp": 24500000, "aliases": "nvl, nva, vixion lightning, vixion advance"},
                     {"name": "All New Vixion / Vixion R 155 VVA", "start": 2017, "end": 2024, "msrp": 29500000, "aliases": "vixion r, all new vixion, vixion 155"},
                     {"name": "MT-15 Inverted Fork", "start": 2019, "end": 2026, "msrp": 38500000, "aliases": "mt15, mt-15, yamaha mt15"}
@@ -274,11 +305,13 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "MX King 150",
+                "name": "MX King & Jupiter",
                 "category": "Bebek Sport",
                 "cc": 150,
                 "variants": [
-                    {"name": "MX King 150 VVA", "start": 2015, "end": 2026, "msrp": 25800000, "aliases": "mx king, mx king 150, jupiter mx king"}
+                    {"name": "Jupiter MX 135 (5-Speed)", "start": 2011, "end": 2015, "msrp": 17500000, "aliases": "njmx, jupiter mx 135, mx 135 new"},
+                    {"name": "MX King 150 VVA", "start": 2015, "end": 2026, "msrp": 25800000, "aliases": "mx king, mx king 150, jupiter mx king"},
+                    {"name": "Jupiter Z1 FI", "start": 2012, "end": 2026, "msrp": 19700000, "aliases": "jupiter z1, jupiter robot fi"}
                 ]
             }
         ]
@@ -295,17 +328,27 @@ MASTER_MOTOR_DATA = [
                     {"name": "Ninja 250 Karbu", "start": 2008, "end": 2012, "msrp": 45000000, "aliases": "ninja 250 karbu, ninja lama 2 silinder"},
                     {"name": "Ninja 250 FI (Generasi 1)", "start": 2013, "end": 2017, "msrp": 58000000, "aliases": "ninja 250 fi, ninja fi 2013 2014 2015"},
                     {"name": "Ninja 250 SL / Mono (1-Silinder)", "start": 2014, "end": 2021, "msrp": 39900000, "aliases": "ninja mono, ninja 250 mono, ninja sl, ninja 250 sl"},
-                    {"name": "Ninja 250 All New (Keyless / Smart Key)", "start": 2018, "end": 2025, "msrp": 67000000, "aliases": "all new ninja 250, ninja 250 keyless, ninja 250 abs se"}
+                    {"name": "All New Ninja 250 (Keyless / Smart Key)", "start": 2018, "end": 2025, "msrp": 67000000, "aliases": "all new ninja 250, ninja 250 keyless, ninja 250 abs se"}
                 ]
             },
             {
-                "name": "Ninja ZX-25R",
+                "name": "Ninja ZX Series",
                 "category": "Sport 4-Cylinder",
                 "cc": 250,
                 "variants": [
                     {"name": "Ninja ZX-25R Standard", "start": 2020, "end": 2026, "msrp": 107000000, "aliases": "zx25r standard, zx 25r non abs"},
                     {"name": "Ninja ZX-25R SE / ABS (Quickshifter)", "start": 2020, "end": 2026, "msrp": 125000000, "aliases": "zx25r abs se, zx25r se, zx25r quick shifter"},
-                    {"name": "Ninja ZX-25RR", "start": 2023, "end": 2026, "msrp": 132000000, "aliases": "zx25rr, zx 25rr, ninja zx25rr"}
+                    {"name": "Ninja ZX-25RR", "start": 2023, "end": 2026, "msrp": 132000000, "aliases": "zx25rr, zx 25rr, ninja zx25rr"},
+                    {"name": "Ninja ZX-4RR (400cc)", "start": 2023, "end": 2026, "msrp": 244800000, "aliases": "zx4rr, zx 4rr, ninja zx4rr"}
+                ]
+            },
+            {
+                "name": "Ninja 150 (2-Tak Legend)",
+                "category": "Sport 2-Stroke",
+                "cc": 150,
+                "variants": [
+                    {"name": "Ninja 150 RR (Super KIPS)", "start": 2012, "end": 2015, "msrp": 37500000, "aliases": "ninja 150 rr, ninja rr new, ninja 2 tak, ninja kips"},
+                    {"name": "Ninja 150 R / SS", "start": 2012, "end": 2015, "msrp": 30500000, "aliases": "ninja r, ninja ss, ninja 150 r, ninja barong 2 tak"}
                 ]
             },
             {
@@ -328,12 +371,13 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "D-Tracker & KLX SM",
+                "name": "Supermoto (D-Tracker & KLX SM)",
                 "category": "Supermoto",
                 "cc": 150,
                 "variants": [
                     {"name": "D-Tracker 150 SE (Velg 17)", "start": 2015, "end": 2023, "msrp": 35500000, "aliases": "dtracker, d-tracker, dtracker 150, dtracker se"},
-                    {"name": "KLX 150 SM / SM SE", "start": 2023, "end": 2026, "msrp": 39900000, "aliases": "klx 150 sm, klx sm, klx supermoto"}
+                    {"name": "KLX 150 SM / SM SE", "start": 2023, "end": 2026, "msrp": 39900000, "aliases": "klx 150 sm, klx sm, klx supermoto"},
+                    {"name": "KLX 230 SM / SM SE", "start": 2022, "end": 2026, "msrp": 54900000, "aliases": "klx 230 sm, klx230sm, klx 230 supermoto"}
                 ]
             },
             {
@@ -343,7 +387,18 @@ MASTER_MOTOR_DATA = [
                 "variants": [
                     {"name": "W175 Standard / SE", "start": 2018, "end": 2026, "msrp": 34500000, "aliases": "kawasaki w175, w175 se, w 175"},
                     {"name": "W175 Cafe", "start": 2019, "end": 2026, "msrp": 35900000, "aliases": "w175 cafe, w175 cafe racer"},
-                    {"name": "W175 TR Scrambler", "start": 2020, "end": 2026, "msrp": 33900000, "aliases": "w175 tr, w175 scrambler"}
+                    {"name": "W175 TR Scrambler", "start": 2020, "end": 2026, "msrp": 33900000, "aliases": "w175 tr, w175 scrambler"},
+                    {"name": "W175 Black Style (Injeksi)", "start": 2024, "end": 2026, "msrp": 35100000, "aliases": "w175 injeksi, w175 black style, w175 fi"}
+                ]
+            },
+            {
+                "name": "Z Series & Versys",
+                "category": "Naked & Touring",
+                "cc": 250,
+                "variants": [
+                    {"name": "Z125 Pro", "start": 2016, "end": 2024, "msrp": 47800000, "aliases": "z125, z 125 pro, kawasaki z125"},
+                    {"name": "Z250 2-Silinder", "start": 2013, "end": 2019, "msrp": 53900000, "aliases": "kawasaki z250, z250 naked, z 250"},
+                    {"name": "Versys-X 250 Tourer / City", "start": 2017, "end": 2026, "msrp": 71200000, "aliases": "versys 250, versys x 250, versys tourer"}
                 ]
             }
         ]
@@ -384,7 +439,8 @@ MASTER_MOTOR_DATA = [
                 "category": "Maxi Matic (3-Roda)",
                 "cc": 300,
                 "variants": [
-                    {"name": "MP3 300 / 500 HPE Tiga Roda", "start": 2018, "end": 2026, "msrp": 330000000, "aliases": "piaggio mp3, pagio mp3, mp3 hpe, piaggio roda 3"}
+                    {"name": "MP3 300 / 500 HPE Tiga Roda", "start": 2018, "end": 2026, "msrp": 330000000, "aliases": "piaggio mp3, pagio mp3, mp3 hpe, piaggio roda 3"},
+                    {"name": "MP3 530 Exclusive (Radar / Reverse Camera)", "start": 2023, "end": 2026, "msrp": 400000000, "aliases": "mp3 530, piaggio mp3 530"}
                 ]
             },
             {
@@ -409,7 +465,7 @@ MASTER_MOTOR_DATA = [
                     {"name": "Sprint 150 3V ie", "start": 2014, "end": 2016, "msrp": 35000000, "aliases": "sprint 3v, sprint 150 3v, vespa sprint lama, pagio sprint"},
                     {"name": "Sprint 150 i-Get (ABS)", "start": 2016, "end": 2023, "msrp": 53000000, "aliases": "sprint iget, sprint 150 iget abs, sprint s 150, pagio sprint iget"},
                     {"name": "Sprint 150 TFT / LED Facelift", "start": 2023, "end": 2026, "msrp": 57000000, "aliases": "sprint tft, new sprint 150 2024, sprint s tft"},
-                    {"name": "Sprint Limited Edition (Racing Sixties / Carbon)", "start": 2018, "end": 2022, "msrp": 59000000, "aliases": "sprint carbon, sprint racing sixties"}
+                    {"name": "Sprint Limited (Carbon / Racing Sixties / Justin Bieber)", "start": 2018, "end": 2024, "msrp": 65000000, "aliases": "sprint carbon, sprint racing sixties, sprint justin bieber"}
                 ]
             },
             {
@@ -419,7 +475,7 @@ MASTER_MOTOR_DATA = [
                 "variants": [
                     {"name": "Primavera 150 3V ie", "start": 2014, "end": 2016, "msrp": 33000000, "aliases": "primavera 3v, vespa primavera lama, pagio primavera"},
                     {"name": "Primavera 150 i-Get (ABS / S)", "start": 2016, "end": 2026, "msrp": 50000000, "aliases": "primavera iget, primavera 150 abs, primavera s, pagio primavera iget"},
-                    {"name": "Primavera Color Vibe / Special Edition", "start": 2022, "end": 2026, "msrp": 60000000, "aliases": "primavera color vibe, primavera sean wotherspoon, primavera 75th"}
+                    {"name": "Primavera Color Vibe / Special Edition", "start": 2022, "end": 2026, "msrp": 60000000, "aliases": "primavera color vibe, primavera sean wotherspoon, primavera 75th, primavera mickey mouse"}
                 ]
             },
             {
@@ -428,7 +484,7 @@ MASTER_MOTOR_DATA = [
                 "cc": 125,
                 "variants": [
                     {"name": "LX 150 2V / 3V ie", "start": 2011, "end": 2015, "msrp": 26000000, "aliases": "vespa lx 150, lx 2v, lx 3v, pagio lx 150"},
-                    {"name": "LX 125 i-Get", "start": 2017, "end": 2026, "msrp": 45000000, "aliases": "vespa lx 125, lx 125 iget, lx iget, pagio lx 125"}
+                    {"name": "LX 125 i-Get / Batik Edition", "start": 2017, "end": 2026, "msrp": 45000000, "aliases": "vespa lx 125, lx 125 iget, lx iget, lx batik, pagio lx 125"}
                 ]
             },
             {
@@ -437,17 +493,18 @@ MASTER_MOTOR_DATA = [
                 "cc": 125,
                 "variants": [
                     {"name": "S 150 2V / 3V ie", "start": 2011, "end": 2015, "msrp": 28000000, "aliases": "vespa s 150, vespa s 3v, pagio s 150"},
-                    {"name": "S 125 i-Get", "start": 2016, "end": 2026, "msrp": 45500000, "aliases": "vespa s 125, s 125 iget, vespa s iget, pagio s 125"}
+                    {"name": "S 125 i-Get Sport", "start": 2016, "end": 2026, "msrp": 45500000, "aliases": "vespa s 125, s 125 iget, vespa s iget, pagio s 125, s 125 sport"}
                 ]
             },
             {
-                "name": "GTS",
+                "name": "GTS & GTV",
                 "category": "Maxi Matic",
                 "cc": 150,
                 "variants": [
                     {"name": "GTS Super 150 3V / i-Get", "start": 2014, "end": 2022, "msrp": 67000000, "aliases": "vespa gts 150, gts super 150, gts iget, pagio gts"},
                     {"name": "GTS Classic / Super Sport 150 (Keyless)", "start": 2023, "end": 2026, "msrp": 78800000, "aliases": "gts 150 keyless, gts classic, gts super sport 150"},
-                    {"name": "GTS 300 Super Tech HPE", "start": 2019, "end": 2026, "msrp": 165000000, "aliases": "vespa gts 300, gts super tech, gts 300 hpe, pagio gts 300"}
+                    {"name": "GTS 300 Super Tech HPE", "start": 2019, "end": 2026, "msrp": 165000000, "aliases": "vespa gts 300, gts super tech, gts 300 hpe, pagio gts 300"},
+                    {"name": "GTV 300 Sei Giorni / Keyless", "start": 2020, "end": 2026, "msrp": 176000000, "aliases": "vespa gtv, gtv 300, gtv sei giorni"}
                 ]
             }
         ]
@@ -462,11 +519,11 @@ MASTER_MOTOR_DATA = [
                 "cc": 150,
                 "variants": [
                     {"name": "Satria F150 Karbu (Barong / Facelift)", "start": 2007, "end": 2015, "msrp": 19500000, "aliases": "satria fu, satria fu karbu, fu barong, satria f150 ckd"},
-                    {"name": "Satria F150 FI All New", "start": 2016, "end": 2026, "msrp": 29000000, "aliases": "satria fu fi, satria f150 injeksi, satria fi"}
+                    {"name": "Satria F150 FI All New Injeksi", "start": 2016, "end": 2026, "msrp": 29000000, "aliases": "satria fu fi, satria f150 injeksi, satria fi, satria fu injeksi"}
                 ]
             },
             {
-                "name": "GSX-R150 & GSX-S150",
+                "name": "GSX 150 Series",
                 "category": "Sport",
                 "cc": 150,
                 "variants": [
@@ -476,21 +533,30 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
-                "name": "Burgman & Nex & Address",
+                "name": "Burgman & Avenis",
                 "category": "Matic",
                 "cc": 125,
                 "variants": [
+                    {"name": "Burgman 200 CBU", "start": 2014, "end": 2019, "msrp": 59900000, "aliases": "burgman 200, suzuki burgman 200"},
                     {"name": "Burgman Street 125EX", "start": 2023, "end": 2026, "msrp": 26000000, "aliases": "burgman 125, burgman street, burgman ex"},
-                    {"name": "Nex II (Standard / Cross / Elegant)", "start": 2018, "end": 2026, "msrp": 19400000, "aliases": "suzuki nex, nex 2, nex ii, nex cross"},
-                    {"name": "Address FI / Playful", "start": 2014, "end": 2024, "msrp": 18900000, "aliases": "suzuki address, address fi, address playful"},
                     {"name": "Avenis 125", "start": 2022, "end": 2026, "msrp": 30100000, "aliases": "suzuki avenis, avenis 125"}
                 ]
             },
             {
-                "name": "V-Strom 250SX",
+                "name": "Nex & Address",
+                "category": "Matic Harian",
+                "cc": 113,
+                "variants": [
+                    {"name": "Address FI / Playful", "start": 2014, "end": 2024, "msrp": 18900000, "aliases": "suzuki address, address fi, address playful"},
+                    {"name": "Nex II (Standard / Cross / Elegant)", "start": 2018, "end": 2026, "msrp": 19400000, "aliases": "suzuki nex, nex 2, nex ii, nex cross, nex crossover"}
+                ]
+            },
+            {
+                "name": "V-Strom & Inazuma",
                 "category": "Adventure Touring",
                 "cc": 250,
                 "variants": [
+                    {"name": "Inazuma 250 GW250 (2-Silinder)", "start": 2012, "end": 2016, "msrp": 49500000, "aliases": "inazuma 250, suzuki inazuma, gw250"},
                     {"name": "V-Strom 250SX Adventure", "start": 2023, "end": 2026, "msrp": 59500000, "aliases": "vstrom, v-strom, vstrom 250, suzuki vstrom"}
                 ]
             }
@@ -534,7 +600,6 @@ def seed_master_motor_database():
                     db.flush()
                     total_models += 1
                 else:
-                    # Update category and cc if needed
                     model_obj.category = model_item.get("category", model_obj.category)
                     model_obj.engine_capacity_cc = model_item.get("cc", model_obj.engine_capacity_cc)
 
@@ -562,7 +627,7 @@ def seed_master_motor_database():
                         var_obj.aliases = var_item.get("aliases")
 
         db.commit()
-        print(f"✅ Seeding Sukses! Ditambahkan/Diperbarui: {total_brands} Merk Baru, {total_models} Model Baru, {total_variants} Varian Baru.")
+        print(f"✅ Seeding Sukses! Ditambahkan/Diperbarui: {total_brands} Merk, {total_models} Model, {total_variants} Varian Motor.")
     except Exception as e:
         db.rollback()
         print(f"❌ Error seeding database: {e}")
