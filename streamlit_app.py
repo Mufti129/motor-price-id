@@ -85,9 +85,12 @@ def ensure_database_initialized():
     init_db()
     db = SessionLocal()
     try:
-        count = db.query(MasterBrand).count()
-        if count == 0:
-            seed_master_motor_database()
+        from data.generate_massive_market_dataset import generate_massive_dataset
+        listing_count = db.query(ScrapedListing).count()
+        if listing_count < 100:
+            generate_massive_dataset(target_per_brand=550)
+    except Exception as e:
+        seed_master_motor_database()
     finally:
         db.close()
 
