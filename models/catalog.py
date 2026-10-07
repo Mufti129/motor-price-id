@@ -25,6 +25,7 @@ class MasterModel(Base):
     name = Column(String(100), nullable=False, index=True) # e.g. Vario, NMAX, Beat, PCX
     category = Column(String(50), nullable=True) # Matic, Sport, Bebek, Trail, Maxi
     engine_capacity_cc = Column(Integer, nullable=True) # 110, 125, 150, 155, 160, 250
+    image_url = Column(Text, nullable=True) # URL foto resmi studio model
     created_at = Column(DateTime, default=datetime.utcnow)
 
     brand = relationship("MasterBrand", back_populates="models")
@@ -41,6 +42,7 @@ class MasterVariant(Base):
     release_year_end = Column(Integer, nullable=True) # e.g. 2022
     official_msrp_new = Column(Numeric(15, 2), nullable=True) # MSRP baru saat rilis
     transmission_type = Column(String(20), default="Automatic") # Automatic, Manual, Semi-Auto
+    image_url = Column(Text, nullable=True) # URL foto spesifik varian
     aliases = Column(Text, nullable=True) # Comma separated search keywords/aliases
     created_at = Column(DateTime, default=datetime.utcnow)
 

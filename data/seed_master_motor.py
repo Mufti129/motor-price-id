@@ -991,12 +991,16 @@ def seed_master_motor_database():
                     MasterModel.name == model_item["name"]
                 ).first()
 
+                from data.populate_catalog_images import get_image_for_model
+                img_url = get_image_for_model(brand_obj.name, model_item["name"])
+
                 if not model_obj:
                     model_obj = MasterModel(
                         brand_id=brand_obj.id,
                         name=model_item["name"],
                         category=model_item.get("category", "Matic"),
-                        engine_capacity_cc=model_item.get("cc")
+                        engine_capacity_cc=model_item.get("cc"),
+                        image_url=img_url
                     )
                     db.add(model_obj)
                     db.flush()
@@ -1004,8 +1008,10 @@ def seed_master_motor_database():
                 else:
                     model_obj.category = model_item.get("category", model_obj.category)
                     model_obj.engine_capacity_cc = model_item.get("cc", model_obj.engine_capacity_cc)
+                    model_obj.image_url = img_url
 
                 for var_item in model_item["variants"]:
+                    var_img_url = get_image_for_model(brand_obj.name, f"{model_item['name']} {var_item['name']}")
                     var_obj = db.query(MasterVariant).filter(
                         MasterVariant.model_id == model_obj.id,
                         MasterVariant.variant_name == var_item["name"]
@@ -1018,7 +1024,8 @@ def seed_master_motor_database():
                             release_year_start=var_item["start"],
                             release_year_end=var_item.get("end"),
                             official_msrp_new=var_item.get("msrp"),
-                            aliases=var_item.get("aliases")
+                            aliases=var_item.get("aliases"),
+                            image_url=var_img_url
                         )
                         db.add(var_obj)
                         total_variants += 1
@@ -1027,6 +1034,7 @@ def seed_master_motor_database():
                         var_obj.release_year_end = var_item.get("end")
                         var_obj.official_msrp_new = var_item.get("msrp")
                         var_obj.aliases = var_item.get("aliases")
+                        var_obj.image_url = var_img_url
 
         db.commit()
         print(f"✅ Seeding Sukses! Ditambahkan/Diperbarui: {total_brands} Merk Baru, {total_models} Model Baru, {total_variants} Varian Baru.")
