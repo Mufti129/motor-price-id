@@ -561,10 +561,392 @@ MASTER_MOTOR_DATA = [
                 ]
             }
         ]
+    },
+    # =========================================================================
+    # SEKTOR SEPEDA MOTOR LISTRIK (ELECTRIC VEHICLES / EV)
+    # =========================================================================
+    {
+        "brand": "Polytron",
+        "country": "Indonesia",
+        "models": [
+            {
+                "name": "Fox-R",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Fox-R (Sewa Baterai / Subsidi)", "start": 2023, "end": 2026, "msrp": 13500000, "aliases": "polytron fox r, fox r, polytron ev, polytron fox-r"},
+                    {"name": "Fox-R (Beli Putus / Non-Subsidi)", "start": 2023, "end": 2026, "msrp": 20500000, "aliases": "polytron fox r buyout, fox r non subsidi"}
+                ]
+            },
+            {
+                "name": "Fox-S",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Fox-S (Sewa Baterai / Subsidi)", "start": 2024, "end": 2026, "msrp": 11500000, "aliases": "polytron fox s, fox s, polytron fox-s"},
+                    {"name": "Fox-S (Beli Putus / Non-Subsidi)", "start": 2024, "end": 2026, "msrp": 18500000, "aliases": "polytron fox s non subsidi, fox s buyout"}
+                ]
+            },
+            {
+                "name": "T-Rex",
+                "category": "Maxi Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "T-Rex 5000W (Top Tier Maxi EV)", "start": 2024, "end": 2026, "msrp": 38000000, "aliases": "polytron t-rex, polytron trex, t-rex ev"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "Alva",
+        "country": "Indonesia",
+        "models": [
+            {
+                "name": "Alva One",
+                "category": "Maxi Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Alva One Standard", "start": 2022, "end": 2025, "msrp": 36490000, "aliases": "alva one, motor listrik alva, alva auto"},
+                    {"name": "Alva One XP (Dynamic TFT)", "start": 2024, "end": 2026, "msrp": 38500000, "aliases": "alva one xp, alva xp, all new alva one"}
+                ]
+            },
+            {
+                "name": "Alva Cervo",
+                "category": "Sporty Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Alva Cervo (Dual Battery Boost)", "start": 2023, "end": 2026, "msrp": 42750000, "aliases": "alva cervo, cervo, alva servo, motor cervo"},
+                    {"name": "Alva Cervo Q (Fast Charging)", "start": 2024, "end": 2026, "msrp": 49500000, "aliases": "alva cervo q, cervo q fast charge"}
+                ]
+            },
+            {
+                "name": "Alva N3",
+                "category": "Urban Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Alva N3 Urban Commuter", "start": 2024, "end": 2026, "msrp": 18500000, "aliases": "alva n3, alva n 3, alva motor baru"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "Gesits",
+        "country": "Indonesia",
+        "models": [
+            {
+                "name": "Gesits G1",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Gesits G1 (Dual Slot 72V 20Ah)", "start": 2019, "end": 2024, "msrp": 28970000, "aliases": "gesits, gesits g1, motor listrik gesits, gesits bumn"}
+                ]
+            },
+            {
+                "name": "Gesits Raya",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Gesits Raya G (Stang Naked)", "start": 2023, "end": 2026, "msrp": 27990000, "aliases": "gesits raya g, gesits raya, raya g"},
+                    {"name": "Gesits Raya E (Entry Level)", "start": 2023, "end": 2026, "msrp": 24990000, "aliases": "gesits raya e, raya e"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "Yadea",
+        "country": "China",
+        "models": [
+            {
+                "name": "Yadea T9",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Yadea T9 TTFAR 2000W", "start": 2023, "end": 2026, "msrp": 21500000, "aliases": "yadea t9, t9 indomobil, yadea ev"}
+                ]
+            },
+            {
+                "name": "Yadea E8S Pro",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Yadea E8S Pro (Graphene Battery)", "start": 2023, "end": 2026, "msrp": 23900000, "aliases": "yadea e8s pro, e8s pro, yadea e8s"}
+                ]
+            },
+            {
+                "name": "Yadea G6",
+                "category": "Maxi Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Yadea G6 Red Dot Award Winner", "start": 2023, "end": 2026, "msrp": 29350000, "aliases": "yadea g6, g6 ev, yadea flagship"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "Viar",
+        "country": "Indonesia",
+        "models": [
+            {
+                "name": "Viar Q1",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Viar Q1 (Generasi 1)", "start": 2017, "end": 2020, "msrp": 17500000, "aliases": "viar q1 lama, q1 gen 1, viar listrik"},
+                    {"name": "Viar Q1 (Generasi 2 / Smart Key)", "start": 2020, "end": 2026, "msrp": 21520000, "aliases": "all new viar q1, viar q1 baru, q1 grab"}
+                ]
+            },
+            {
+                "name": "Viar N Series",
+                "category": "Electric Scooter (EV)",
+                "cc": 0,
+                "variants": [
+                    {"name": "Viar N1", "start": 2022, "end": 2026, "msrp": 25870000, "aliases": "viar n1, n1 ev"},
+                    {"name": "Viar N2 (Dual Battery)", "start": 2022, "end": 2026, "msrp": 34000000, "aliases": "viar n2, n2 dual battery"}
+                ]
+            }
+        ]
+    },
+
+    # =========================================================================
+    # SEKTOR RETRO, CRUISER, & SPORT POPULER
+    # =========================================================================
+    {
+        "brand": "Royal Enfield",
+        "country": "Inggris / India",
+        "models": [
+            {
+                "name": "Hunter 350",
+                "category": "Modern Retro Roadster",
+                "cc": 350,
+                "variants": [
+                    {"name": "Hunter 350 Dapper", "start": 2022, "end": 2026, "msrp": 106400000, "aliases": "re hunter 350, hunter 350, royal enfield hunter"},
+                    {"name": "Hunter 350 Rebel (Dual Tone)", "start": 2022, "end": 2026, "msrp": 108200000, "aliases": "hunter 350 rebel, hunter rebel"}
+                ]
+            },
+            {
+                "name": "Classic 350",
+                "category": "Vintage Classic",
+                "cc": 350,
+                "variants": [
+                    {"name": "Classic 350 (Mesin UCE Lama)", "start": 2014, "end": 2021, "msrp": 85000000, "aliases": "classic 350 lama, re classic 350 uce, classic 350 carbu/efi"},
+                    {"name": "Classic 350 Reborn (J-Series Halis)", "start": 2022, "end": 2026, "msrp": 113300000, "aliases": "all new classic 350, classic 350 reborn, classic j series, re reborn"}
+                ]
+            },
+            {
+                "name": "Meteor 350",
+                "category": "Easy Cruiser",
+                "cc": 350,
+                "variants": [
+                    {"name": "Meteor 350 Fireball", "start": 2021, "end": 2026, "msrp": 119800000, "aliases": "re meteor 350, meteor 350 fireball, meteor fireball"},
+                    {"name": "Meteor 350 Stellar / Supernova", "start": 2021, "end": 2026, "msrp": 124500000, "aliases": "meteor 350 stellar, meteor 350 supernova"}
+                ]
+            },
+            {
+                "name": "Himalayan",
+                "category": "Dual-Purpose Adventure",
+                "cc": 411,
+                "variants": [
+                    {"name": "Himalayan 411 (Generasi 1)", "start": 2018, "end": 2023, "msrp": 133300000, "aliases": "re himalayan, himalayan 411, royal enfield himalayan"},
+                    {"name": "Himalayan 450 (Liquid Cooled Sherpa)", "start": 2024, "end": 2026, "msrp": 155000000, "aliases": "all new himalayan 450, himalayan 450 sherpa"}
+                ]
+            },
+            {
+                "name": "Twins 650",
+                "category": "Cafe Racer & Roadster",
+                "cc": 650,
+                "variants": [
+                    {"name": "Interceptor 650", "start": 2019, "end": 2026, "msrp": 221700000, "aliases": "interceptor 650, re interceptor, royal enfield 650"},
+                    {"name": "Continental GT 650 (Cafe Racer)", "start": 2019, "end": 2026, "msrp": 238500000, "aliases": "continental gt 650, continental 650, re gt 650"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "Benelli & Keeway",
+        "country": "Italia / China",
+        "models": [
+            {
+                "name": "Motobi 200",
+                "category": "Cruiser / Bobber",
+                "cc": 200,
+                "variants": [
+                    {"name": "Motobi 200 EFI (Classic)", "start": 2016, "end": 2023, "msrp": 30000000, "aliases": "benelli motobi 200, motobi 200 efi, motobi klasik"},
+                    {"name": "Motobi 200 Evo (Sport Bobber)", "start": 2018, "end": 2026, "msrp": 32200000, "aliases": "benelli evo 200, motobi 200 evo, motobi evo"}
+                ]
+            },
+            {
+                "name": "Patagonian Eagle 250",
+                "category": "Cruiser 2-Silinder (Suara Moge)",
+                "cc": 250,
+                "variants": [
+                    {"name": "Patagonian Eagle 250 (Karburator)", "start": 2016, "end": 2020, "msrp": 38900000, "aliases": "patagonian eagle karbu, benelli patagonian 250"},
+                    {"name": "Patagonian Eagle 250 EFI (Injeksi)", "start": 2020, "end": 2026, "msrp": 44800000, "aliases": "benelli patagonian eagle efi, patagonian efi, patagonian injeksi"}
+                ]
+            },
+            {
+                "name": "Panarea 125",
+                "category": "Retro Modern Matic",
+                "cc": 125,
+                "variants": [
+                    {"name": "Panarea 125 EFI", "start": 2021, "end": 2026, "msrp": 24800000, "aliases": "benelli panarea, panarea 125, matic benelli panarea"}
+                ]
+            },
+            {
+                "name": "Keeway V250Fi / Benda",
+                "category": "V-Twin Cruiser (Belt Drive)",
+                "cc": 250,
+                "variants": [
+                    {"name": "Keeway V250Fi Geronimo", "start": 2020, "end": 2024, "msrp": 59800000, "aliases": "keeway v250fi, keeway geronimo, v250fi v-twin"},
+                    {"name": "Keeway Benda V252C (Liquid Cooled V-Twin)", "start": 2023, "end": 2026, "msrp": 73800000, "aliases": "keeway benda v252c, benda 250, keeway benda"}
+                ]
+            },
+            {
+                "name": "Keeway Shiny 150",
+                "category": "Retro Scooter",
+                "cc": 150,
+                "variants": [
+                    {"name": "Keeway Shiny 150 Classic", "start": 2022, "end": 2026, "msrp": 26880000, "aliases": "keeway shiny 150, shiny 150, keeway shiny"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "KTM",
+        "country": "Austria",
+        "models": [
+            {
+                "name": "Duke Series",
+                "category": "Naked Sport Streetfighter",
+                "cc": 250,
+                "variants": [
+                    {"name": "Duke 200 (Gen 1 & Facelift)", "start": 2014, "end": 2024, "msrp": 52000000, "aliases": "ktm duke 200, duke 200, ktm djuk 200"},
+                    {"name": "Duke 250 (Split LED Headlamp)", "start": 2015, "end": 2026, "msrp": 65000000, "aliases": "ktm duke 250, duke 250 new, ktm 250 duke"},
+                    {"name": "Duke 390 (TFT Display & Quickshifter)", "start": 2015, "end": 2026, "msrp": 99900000, "aliases": "ktm duke 390, duke 390, duke 390 tft"}
+                ]
+            },
+            {
+                "name": "RC Series",
+                "category": "Supersport Fairing",
+                "cc": 250,
+                "variants": [
+                    {"name": "RC 200", "start": 2014, "end": 2023, "msrp": 43500000, "aliases": "ktm rc 200, rc200"},
+                    {"name": "RC 250 (Slipper Clutch)", "start": 2015, "end": 2026, "msrp": 67000000, "aliases": "ktm rc 250, rc250, ktm fairing 250"},
+                    {"name": "RC 390", "start": 2015, "end": 2026, "msrp": 104900000, "aliases": "ktm rc 390, rc390"}
+                ]
+            },
+            {
+                "name": "Adventure Series",
+                "category": "Dual-Sport Adventure",
+                "cc": 250,
+                "variants": [
+                    {"name": "250 Adventure (Offroad ABS)", "start": 2021, "end": 2026, "msrp": 79000000, "aliases": "ktm 250 adventure, 250 adv, ktm adventure 250"},
+                    {"name": "390 Adventure (Traction Control)", "start": 2020, "end": 2026, "msrp": 119000000, "aliases": "ktm 390 adventure, 390 adv, ktm adventure 390"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "TVS",
+        "country": "India",
+        "models": [
+            {
+                "name": "Callisto",
+                "category": "Classic Retro Matic",
+                "cc": 110,
+                "variants": [
+                    {"name": "Callisto 110 (Bodi Plat Metal)", "start": 2018, "end": 2024, "msrp": 19300000, "aliases": "tvs callisto, callisto 110, tvs kalisto, matic tvs"},
+                    {"name": "Callisto 125 (Bagasi Muat 2 Helm)", "start": 2023, "end": 2026, "msrp": 21700000, "aliases": "all new callisto 125, callisto 125, tvs callisto 125"}
+                ]
+            },
+            {
+                "name": "Ronin",
+                "category": "Modern Retro Scrambler",
+                "cc": 225,
+                "variants": [
+                    {"name": "Ronin 225 SS (Single Channel ABS)", "start": 2023, "end": 2026, "msrp": 34900000, "aliases": "tvs ronin, ronin 225, tvs ronin ss"},
+                    {"name": "Ronin 225 TD (Dual Channel ABS & Connected)", "start": 2023, "end": 2026, "msrp": 38900000, "aliases": "ronin 225 td, tvs ronin dual channel"}
+                ]
+            },
+            {
+                "name": "Apache RTR",
+                "category": "Naked Sport & Racing",
+                "cc": 200,
+                "variants": [
+                    {"name": "Apache RTR 200 4V (SmartXonnect)", "start": 2016, "end": 2026, "msrp": 25100000, "aliases": "tvs apache, apache rtr 200, apache 200 4v"},
+                    {"name": "Apache RR 310 (Fairing Supersport)", "start": 2018, "end": 2024, "msrp": 49000000, "aliases": "tvs apache rr 310, apache 310, rr310"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "Harley-Davidson",
+        "country": "Amerika Serikat",
+        "models": [
+            {
+                "name": "Street 500",
+                "category": "Cruiser Urban (Liquid Cooled)",
+                "cc": 500,
+                "variants": [
+                    {"name": "Street 500 (XG500)", "start": 2014, "end": 2021, "msrp": 235000000, "aliases": "harley street 500, hd street 500, xg500, street 500"}
+                ]
+            },
+            {
+                "name": "Sportster",
+                "category": "Classic American Cruiser",
+                "cc": 883,
+                "variants": [
+                    {"name": "Sportster Iron 883 (Dark Custom)", "start": 2014, "end": 2022, "msrp": 399000000, "aliases": "harley iron 883, hd iron 883, sportster 883, iron 883"},
+                    {"name": "Sportster Forty-Eight 1200 (Peanut Tank)", "start": 2014, "end": 2022, "msrp": 484000000, "aliases": "harley forty eight, hd forty eight, sportster 48, forty eight 1200"}
+                ]
+            },
+            {
+                "name": "Softail",
+                "category": "Heavyweight Cruiser (Milwaukee-Eight)",
+                "cc": 1745,
+                "variants": [
+                    {"name": "Softail Fat Boy 114", "start": 2018, "end": 2026, "msrp": 650000000, "aliases": "harley fat boy, fat boy 114, hd softail fat boy"},
+                    {"name": "Softail Breakout 114", "start": 2018, "end": 2026, "msrp": 680000000, "aliases": "harley breakout, breakout 114, hd breakout"}
+                ]
+            }
+        ]
+    },
+    {
+        "brand": "BMW Motorrad",
+        "country": "Jerman",
+        "models": [
+            {
+                "name": "G 310 Series",
+                "category": "Entry Adventure & Roadster",
+                "cc": 313,
+                "variants": [
+                    {"name": "BMW G 310 R (Roadster)", "start": 2017, "end": 2026, "msrp": 125000000, "aliases": "bmw g310r, g 310 r, bmw 310 r"},
+                    {"name": "BMW G 310 GS (Adventure Touring)", "start": 2018, "end": 2026, "msrp": 142000000, "aliases": "bmw g310gs, g 310 gs, bmw 310 gs, g310 gs"}
+                ]
+            },
+            {
+                "name": "C 400 Series",
+                "category": "Luxury Maxi Scooter",
+                "cc": 350,
+                "variants": [
+                    {"name": "BMW C 400 X (Urban)", "start": 2019, "end": 2026, "msrp": 259000000, "aliases": "bmw c400x, c 400 x, matic bmw"},
+                    {"name": "BMW C 400 GT (Gran Turismo)", "start": 2019, "end": 2026, "msrp": 279000000, "aliases": "bmw c400gt, c 400 gt, c400 gt"}
+                ]
+            },
+            {
+                "name": "R 1250 GS",
+                "category": "Flagship Adventure Touring",
+                "cc": 1254,
+                "variants": [
+                    {"name": "BMW R 1250 GS Standard", "start": 2019, "end": 2024, "msrp": 805000000, "aliases": "bmw r1250gs, r 1250 gs, bmw r 1250, r1250 gs"},
+                    {"name": "BMW R 1250 GS Adventure (GSA)", "start": 2019, "end": 2024, "msrp": 855000000, "aliases": "bmw r1250gsa, r 1250 gsa, bmw gsa 1250"}
+                ]
+            }
+        ]
     }
 ]
 
 def seed_master_motor_database():
+
     init_db()
     db = SessionLocal()
     try:

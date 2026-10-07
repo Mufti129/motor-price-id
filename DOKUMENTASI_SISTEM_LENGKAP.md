@@ -199,17 +199,28 @@ Sistem MotorPrice ID dibangun berdasarkan metodologi ilmiah dan literatur ekonom
 
 # BAB V: Taksonomi Master Katalog 12 Tahun (2014–2026)
 
-Master katalog mencakup 6 produsen utama di Indonesia dengan rincian:
+Master katalog mencakup 17 produsen sepeda motor di Indonesia (ICE Konvensional, Motor Listrik/EV, Retro Cruiser, dan Big Bike/Moge):
 
 | Merk Produsen | Negara Asal | Jumlah Model | Jumlah Varian | Rentang CC Mesin | Model Unggulan Terdaftar |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Honda** | Jepang | 21 Model | 76 Varian | 110cc – 250cc | Beat Series, Vario Series, Scoopy, Stylo 160, PCX, ADV, CB150R, CB150X, CBR250RR, CRF150L, Sonic 150R, Forza 250 |
-| **Yamaha** | Jepang | 20 Model | 48 Varian | 115cc – 530cc | Mio Series, Fazzio, Grand Filano, NMAX Series, Aerox, XMAX, Lexi LX, MT-15, R15, R25, WR 155 R, XSR 155, TMAX DX 530 |
-| **Kawasaki** | Jepang | 11 Model | 34 Varian | 125cc – 400cc | Ninja 250 FI/Karbu, Ninja ZX-25R, Ninja ZX-4RR, KLX 150/230, D-Tracker, W175 Series, Versys-X 250, Z125 Pro |
-| **Vespa (Piaggio)** | Italia | 6 Model | 21 Varian | 125cc – 300cc | Sprint (i-Get/TFT/Limited), Primavera (Color Vibe/Sean Wotherspoon), GTS Super 150/300, LX 125, S 125, GTV 300 HPE |
-| **Piaggio** | Italia | 5 Model | 10 Varian | 125cc – 530cc | Medley S 150, Liberty 150 S, Beverly 300, MP3 300 HPE, MP3 530 Exclusive |
-| **Suzuki** | Jepang | 10 Model | 23 Varian | 110cc – 250cc | Satria F150 FI, GSX-R150, GSX-S150, Address FI, Nex II/Crossover, V-Strom 250SX, Burgman Street 125EX, Inazuma 250 |
-| **TOTAL** | **-** | **73 Model** | **212 Varian** | **110cc – 530cc** | **Seluruh Segmen Motor Indonesia** |
+| **Yamaha** | Jepang | 20 Model | 48 Varian | 125cc – 250cc | Mio Series, Fazzio, Grand Filano, NMAX Series, Aerox, XMAX, Lexi LX, MT-15, R15, R25, WR 155 R, XSR 155 |
+| **Kawasaki** | Jepang | 11 Model | 34 Varian | 150cc – 250cc | Ninja 250 FI/Karbu, Ninja ZX-25R, KLX 150/230, D-Tracker 150, W175 Series, Versys-X 250, Z125 Pro |
+| **Vespa (Piaggio)** | Italia | 6 Model | 21 Varian | 125cc – 150cc | Sprint (i-Get/TFT/Limited), Primavera (Color Vibe/Sean Wotherspoon), GTS Super 150/300, LX 125, S 125, GTV 300 HPE |
+| **Piaggio** | Italia | 5 Model | 10 Varian | 100cc – 300cc | Medley S 150, Liberty 150 S, Beverly 300, MP3 300 HPE, Zip 100 |
+| **Suzuki** | Jepang | 10 Model | 23 Varian | 113cc – 250cc | Satria F150 FI, GSX-R150, GSX-S150, Address FI, Nex II/Crossover, V-Strom 250SX, Burgman Street 125EX, Inazuma 250 |
+| **Polytron** | Indonesia | 3 Model | 5 Varian | 0cc (Electric EV) | Fox-R (Sewa Baterai / Beli Putus), Fox-S (Sewa Baterai / Beli Putus), T-Rex 5000W |
+| **Alva** | Indonesia | 3 Model | 5 Varian | 0cc (Electric EV) | Alva One, Alva One XP, Alva Cervo (1 & 2 Batt), Alva Cervo Q, Alva N3 |
+| **Gesits** | Indonesia | 2 Model | 3 Varian | 0cc (Electric EV) | Gesits G1, Gesits Raya G, Gesits Raya E |
+| **Yadea** | China | 3 Model | 3 Varian | 0cc (Electric EV) | Yadea T9 (TTFAR), Yadea E8S Pro (Graphene), Yadea G6 |
+| **Viar** | Indonesia | 2 Model | 4 Varian | 0cc (Electric EV) | Viar Q1 (Gen 1 & 2), Viar N1, Viar N2 |
+| **Royal Enfield** | Inggris / India | 5 Model | 10 Varian | 350cc – 650cc | Hunter 350, Classic 350 (J-Platform), Meteor 350, Himalayan 411/450, Interceptor/Continental GT 650 |
+| **Benelli & Keeway** | Italia / China | 5 Model | 8 Varian | 125cc – 250cc | Motobi 200 EVO, Patagonian Eagle 250, Panarea 125, Keeway V250Fi / Benda V252C, Shiny 150 |
+| **KTM** | Austria | 3 Model | 8 Varian | 250cc – 390cc | Duke 200/250/390, RC 200/250/390, 250/390 Adventure |
+| **TVS** | India | 3 Model | 6 Varian | 110cc – 225cc | Callisto 110/125, Ronin 225 (SS/TD), Apache RTR 200 4V / RTR 310 |
+| **Harley-Davidson** | Amerika Serikat | 3 Model | 5 Varian | 500cc – 1745cc | Street 500, Sportster Iron 883 / Forty-Eight, Softail Fat Boy 114 / Breakout 114 |
+| **BMW Motorrad** | Jerman | 3 Model | 6 Varian | 313cc – 1254cc | G 310 R / GS, C 400 X / GT, R 1250 GS / GS Adventure (GSA) |
+| **TOTAL** | **-** | **108 Model** | **275 Varian** | **EV & 110cc – 1745cc** | **Seluruh Segmen Motor Indonesia (ICE, EV, Moge)** |
 
 ---
 
