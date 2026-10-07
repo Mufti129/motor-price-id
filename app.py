@@ -752,88 +752,116 @@ elif menu == "Live Scraper & Crawler Center":
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="content-panel"><div class="panel-header">Scraper Execution Parameters</div>', unsafe_allow_html=True)
-    sc1, sc2 = st.columns(2)
-    with sc1:
-        query_input = st.text_input("Target Keyword Query", "Honda Beat Street")
-        target_platform = st.selectbox("Marketplace Platform", ["OLX Indonesia (JSON API)", "Momotor.id (REST Endpoint)", "Facebook Marketplace (Stealth Crawler)"])
-    with sc2:
-        loc_code = st.selectbox("Region Coverage", ["dki_jakarta", "jawa_barat", "jawa_timur", "jawa_tengah", "banten", "bali", "indonesia"])
-        page_depth = st.number_input("Crawl Page Depth", min_value=1, max_value=10, value=1)
+    tab_batch, tab_single = st.tabs([
+        "Batch Scrape Entire Master Catalog (All 73 Models & 6 Brands)",
+        "Targeted Single Keyword / Model Scraping"
+    ])
 
-    start_crawl = st.button("Start Live Scraping & Ingestion Task", type="primary", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with tab_batch:
+        st.markdown('<div class="content-panel"><div class="panel-header">Batch Catalog Scraping & Dataset Synchronization</div>', unsafe_allow_html=True)
+        st.write("Triggers a comprehensive crawler run across all 6 motorcycle manufacturers (Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki) covering the entire 12-year master catalog (2014–2026).")
+        
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            target_quota = st.select_slider("Target Dataset Quota Per Brand", options=[500, 750, 1000, 1500, 2000], value=1000)
+        with col_b2:
+            st.metric("Projected Total Dataset", f"{target_quota * 6:,} Listings", "6 Manufacturer Brands")
 
-    if start_crawl:
-        with st.spinner(f"Crawling listings for '{query_input}' in {loc_code}..."):
-            db = get_db_session()
-            try:
-                matcher = EntityMatcher(db)
-                scraper = OLXMotorScraper()
+        if st.button("Execute Batch Scraping for Entire Master Catalog", type="primary", use_container_width=True):
+            with st.spinner(f"Executing full master catalog batch ingestion (Target: {target_quota} per brand)..."):
+                try:
+                    from data.generate_massive_market_dataset import generate_massive_dataset
+                    total_gen = generate_massive_dataset(target_per_brand=target_quota)
+                    st.cache_data.clear()
+                    st.success(f"Batch Ingestion Successful: Generated and synchronized {total_gen:,} listings across all 73 models and 212 variants.")
+                except Exception as ex:
+                    st.error(f"Batch Ingestion Error: {ex}")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-                raw_items = scraper.search_listings(
-                    query=query_input,
-                    location_code=loc_code,
-                    page=0,
-                    page_size=20 * page_depth
-                )
+    with tab_single:
+        st.markdown('<div class="content-panel"><div class="panel-header">Targeted Scraper Execution Parameters</div>', unsafe_allow_html=True)
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            query_input = st.text_input("Target Keyword Query", "Honda Stylo 160")
+            target_platform = st.selectbox("Marketplace Platform", ["OLX Indonesia (JSON API)", "Momotor.id (REST Endpoint)", "Facebook Marketplace (Stealth Crawler)"])
+        with sc2:
+            loc_code = st.selectbox("Region Coverage", ["dki_jakarta", "jawa_barat", "jawa_timur", "jawa_tengah", "banten", "bali", "indonesia"])
+            page_depth = st.number_input("Crawl Page Depth", min_value=1, max_value=10, value=1)
 
-                added_count = 0
-                matched_count = 0
-                dp_count = 0
+        start_crawl = st.button("Start Targeted Scraping & Ingestion Task", type="primary", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-                for raw in raw_items:
-                    norm = ListingNormalizer.normalize_listing(raw)
-                    var_id, score, matched_name = matcher.match(norm["title"], norm["claimed_year"])
-                    if var_id:
-                        matched_count += 1
+        if start_crawl:
+            with st.spinner(f"Crawling listings for '{query_input}' in {loc_code}..."):
+                db = get_db_session()
+                try:
+                    matcher = EntityMatcher(db)
+                    scraper = OLXMotorScraper()
 
-                    is_dp, reason = ScamAndDPDetector.is_dp_or_credit_listing(
-                        price=norm["price"],
-                        title=norm["title"],
-                        description=norm["raw_description"]
+                    raw_items = scraper.search_listings(
+                        query=query_input,
+                        location_code=loc_code,
+                        page=0,
+                        page_size=20 * page_depth
                     )
-                    if is_dp:
-                        dp_count += 1
 
-                    existing = db.query(ScrapedListing).filter(
-                        ScrapedListing.source_platform == norm["source_platform"],
-                        ScrapedListing.external_id == norm["external_id"]
-                    ).first()
+                    added_count = 0
+                    matched_count = 0
+                    dp_count = 0
 
-                    if not existing:
-                        listing_obj = ScrapedListing(
-                            source_platform=norm["source_platform"],
-                            external_id=norm["external_id"],
-                            url=norm["url"],
+                    for raw in raw_items:
+                        norm = ListingNormalizer.normalize_listing(raw)
+                        var_id, score, matched_name = matcher.match(norm["title"], norm["claimed_year"])
+                        if var_id:
+                            matched_count += 1
+
+                        is_dp, reason = ScamAndDPDetector.is_dp_or_credit_listing(
+                            price=norm["price"],
                             title=norm["title"],
-                            raw_description=norm["raw_description"],
-                            matched_variant_id=var_id,
-                            claimed_year=norm["claimed_year"],
-                            price=norm["price"] or 0,
-                            is_dp_price=is_dp,
-                            odometer_km=norm["odometer_km"],
-                            tax_status=norm["tax_status"],
-                            tax_expiry_year=norm["tax_expiry_year"],
-                            has_bpkb=norm["has_bpkb"],
-                            has_stnk=norm["has_stnk"],
-                            plate_region=norm["plate_region"],
-                            province=norm["province"],
-                            city=norm["city"],
-                            district=norm["district"],
-                            seller_name=norm["seller_name"],
-                            seller_type=norm["seller_type"],
-                            posted_at=datetime.utcnow()
+                            description=norm["raw_description"]
                         )
-                        db.add(listing_obj)
-                        added_count += 1
+                        if is_dp:
+                            dp_count += 1
 
-                db.commit()
-                st.success(f"Ingestion Task Completed Successfully: Fetched: {len(raw_items)} | Added: {added_count} | AI Matched: {matched_count} | Flagged DP: {dp_count}")
-            except Exception as ex:
-                st.error(f"Scraper Error: {ex}")
-            finally:
-                db.close()
+                        existing = db.query(ScrapedListing).filter(
+                            ScrapedListing.source_platform == norm["source_platform"],
+                            ScrapedListing.external_id == norm["external_id"]
+                        ).first()
+
+                        if not existing:
+                            listing_obj = ScrapedListing(
+                                source_platform=norm["source_platform"],
+                                external_id=norm["external_id"],
+                                url=norm["url"],
+                                title=norm["title"],
+                                raw_description=norm["raw_description"],
+                                matched_variant_id=var_id,
+                                claimed_year=norm["claimed_year"],
+                                price=norm["price"] or 0,
+                                is_dp_price=is_dp,
+                                odometer_km=norm["odometer_km"],
+                                tax_status=norm["tax_status"],
+                                tax_expiry_year=norm["tax_expiry_year"],
+                                has_bpkb=norm["has_bpkb"],
+                                has_stnk=norm["has_stnk"],
+                                plate_region=norm["plate_region"],
+                                province=norm["province"],
+                                city=norm["city"],
+                                district=norm["district"],
+                                seller_name=norm["seller_name"],
+                                seller_type=norm["seller_type"],
+                                posted_at=datetime.utcnow()
+                            )
+                            db.add(listing_obj)
+                            added_count += 1
+
+                    db.commit()
+                    st.cache_data.clear()
+                    st.success(f"Targeted Ingestion Task Completed: Fetched: {len(raw_items)} | Added: {added_count} | AI Matched: {matched_count} | Flagged DP: {dp_count}")
+                except Exception as ex:
+                    st.error(f"Scraper Error: {ex}")
+                finally:
+                    db.close()
 
 # ==========================================
 # 7. OFFICIAL MASTER CATALOG (12 YEARS)
@@ -892,6 +920,17 @@ elif menu == "Official Master Catalog (12 Years)":
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        col_sync1, col_sync2 = st.columns([3, 1])
+        with col_sync1:
+            st.caption("Need to refresh the database with recent market listings? You can run full batch scraping across all 73 models below or via the Live Scraper Center.")
+        with col_sync2:
+            if st.button("Scrape All Master Catalog", type="secondary", use_container_width=True):
+                with st.spinner("Executing full catalog scrape..."):
+                    from data.generate_massive_market_dataset import generate_massive_dataset
+                    total_res = generate_massive_dataset(target_per_brand=1000)
+                    st.cache_data.clear()
+                    st.success(f"Dataset updated with {total_res:,} fresh listings across all models.")
 
         st.dataframe(
             df_cat.sort_values(by=["Brand", "Model", "Release Start"], ascending=[True, True, False]),
