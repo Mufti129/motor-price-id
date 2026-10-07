@@ -60,7 +60,7 @@ TAX_TEMPLATES = [
     ("Unknown", "ss lengkap siap jalan", True, 0)
 ]
 
-def generate_massive_dataset(target_per_brand: int = 550):
+def generate_massive_dataset(target_per_brand: int = 1000):
     init_db()
     seed_master_motor_database()
 
@@ -159,9 +159,7 @@ def generate_massive_dataset(target_per_brand: int = 550):
                     "city": city
                 })
 
-                matched_id, score, matched_name = matcher.match(norm["title"], norm["claimed_year"])
-                if not matched_id:
-                    matched_id = var.id # Fallback to true variant
+                matched_id = var.id
 
                 is_dp, _ = ScamAndDPDetector.is_dp_or_credit_listing(
                     price=norm["price"],
@@ -220,4 +218,4 @@ def generate_massive_dataset(target_per_brand: int = 550):
         db.close()
 
 if __name__ == "__main__":
-    generate_massive_dataset(target_per_brand=550)
+    generate_massive_dataset(target_per_brand=1000)

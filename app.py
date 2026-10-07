@@ -88,7 +88,7 @@ def ensure_database_initialized():
         from data.generate_massive_market_dataset import generate_massive_dataset
         listing_count = db.query(ScrapedListing).count()
         if listing_count < 100:
-            generate_massive_dataset(target_per_brand=550)
+            generate_massive_dataset(target_per_brand=1000)
     except Exception as e:
         seed_master_motor_database()
     finally:
