@@ -1,0 +1,1 @@
+from scrapers.olx_scraper import OLXMotorScraper
