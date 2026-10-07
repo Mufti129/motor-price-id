@@ -170,11 +170,19 @@ def generate_massive_dataset(target_per_brand: int = 1000):
 
                 post_date = datetime.now() - timedelta(days=random.randint(0, 45), hours=random.randint(1, 23))
 
+                platform = random.choice(["olx", "olx", "momotor", "facebook"])
+                if platform == "facebook":
+                    listing_url = f"https://www.facebook.com/marketplace/item/{random.randint(100000000000000, 999999999999999)}"
+                elif platform == "momotor":
+                    listing_url = f"https://www.momotor.id/motor-bekas/detail/{random.randint(100000, 999999)}"
+                else:
+                    listing_url = f"https://www.olx.co.id/item/{random.randint(100000000, 999999999)}"
+
                 ext_id = f"gen_{brand.name[:3].lower()}_{brand_count}_{random.randint(100000, 999999)}"
                 listing_obj = ScrapedListing(
-                    source_platform=random.choice(["olx", "olx", "momotor", "facebook"]),
+                    source_platform=platform,
                     external_id=ext_id,
-                    url=f"https://www.olx.co.id/item/{random.randint(1000000, 9999999)}",
+                    url=listing_url,
                     title=norm["title"],
                     raw_description=desc,
                     matched_variant_id=matched_id,
