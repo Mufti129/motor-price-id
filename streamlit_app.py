@@ -1,11 +1,13 @@
 import os
 import time
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from models.database import SessionLocal, init_db
 from models.catalog import MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats
@@ -21,63 +23,199 @@ from analytics.pricing_engine import PricingAnalyticsEngine
 # ==========================================
 st.set_page_config(
     page_title="MotorPrice ID - Used Motorcycle Intelligence Platform",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Professional CSS (No emojis, clean corporate theme)
+# Custom Enterprise Modern UI/UX CSS
 st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-    .reportview-container {
-        background: #f8fafc;
+    /* Global Typography */
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    .metric-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 18px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    
+    .main .block-container {
+        padding-top: 1.8rem;
+        padding-bottom: 3rem;
+        max-width: 1400px;
     }
-    .metric-value {
-        font-size: 24px;
+
+    /* Top Executive Header */
+    .app-header {
+        background: linear-gradient(135deg, #0b1329 0%, #111e38 50%, #0d1b2a 100%);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .app-header-title {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: #f8fafc;
+        margin: 0 0 6px 0;
+    }
+    .app-header-subtitle {
+        font-size: 14px;
+        color: #94a3b8;
+        margin: 0;
+        line-height: 1.5;
+    }
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+        font-size: 11px;
         font-weight: 700;
-        color: #0f172a;
-        margin-top: 4px;
-    }
-    .metric-label {
-        font-size: 13px;
-        color: #64748b;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
+        letter-spacing: 0.8px;
+        padding: 4px 10px;
+        border-radius: 20px;
     }
-    .badge-cash {
-        background-color: #ecfdf5;
-        color: #065f46;
-        padding: 2px 8px;
-        border-radius: 4px;
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 6px #10b981;
+    }
+
+    /* Metric KPI Cards */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .kpi-card {
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .kpi-card:hover {
+        border-color: rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+    }
+    .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    }
+    .kpi-card.emerald::before {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+    .kpi-card.amber::before {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+    .kpi-card.rose::before {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+    .kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-bottom: 6px;
+    }
+    .kpi-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 26px;
+        font-weight: 700;
+        color: #f8fafc;
+        line-height: 1.1;
+        margin-bottom: 4px;
+    }
+    .kpi-caption {
         font-size: 12px;
-        font-weight: 600;
+        color: #64748b;
     }
-    .badge-dp {
-        background-color: #fef2f2;
-        color: #991b1b;
-        padding: 2px 8px;
-        border-radius: 4px;
+
+    /* Section Panels */
+    .content-panel {
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    .panel-header {
+        font-size: 18px;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin-bottom: 14px;
+        letter-spacing: -0.3px;
+    }
+
+    /* Valuation Hero Box */
+    .val-result-box {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 16px;
+    }
+    .val-price-hero {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 36px;
+        font-weight: 800;
+        color: #38bdf8;
+        margin: 8px 0;
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #0b0f19;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .sidebar-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #f8fafc;
+        letter-spacing: -0.3px;
+        margin-bottom: 2px;
+    }
+    .sidebar-desc {
         font-size: 12px;
-        font-weight: 600;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 44px;
-        font-weight: 600;
-        border-radius: 6px 6px 0 0;
-        padding: 0 16px;
+        color: #64748b;
+        margin-bottom: 16px;
     }
 </style>
 """, unsafe_allow_html=True)
+
+DARK_PLOTLY_LAYOUT = dict(
+    paper_bgcolor="rgba(17, 24, 39, 0.6)",
+    plot_bgcolor="rgba(17, 24, 39, 0.6)",
+    font=dict(family="Plus Jakarta Sans", color="#94a3b8", size=12),
+    margin=dict(t=30, b=30, l=30, r=30),
+    xaxis=dict(
+        gridcolor="rgba(255, 255, 255, 0.06)",
+        zerolinecolor="rgba(255, 255, 255, 0.08)"
+    ),
+    yaxis=dict(
+        gridcolor="rgba(255, 255, 255, 0.06)",
+        zerolinecolor="rgba(255, 255, 255, 0.08)"
+    )
+)
 
 # Ensure DB & Seed on cold start
 @st.cache_resource
@@ -89,17 +227,17 @@ def ensure_database_initialized():
         listing_count = db.query(ScrapedListing).count()
         if listing_count < 100:
             generate_massive_dataset(target_per_brand=1000)
-    except Exception as e:
+    except Exception:
         seed_master_motor_database()
     finally:
         db.close()
 
 ensure_database_initialized()
 
-# Helper Data Loaders
 def get_db_session() -> Session:
     return SessionLocal()
 
+@st.cache_data(ttl=60)
 def load_all_listings_df() -> pd.DataFrame:
     db = get_db_session()
     try:
@@ -150,7 +288,7 @@ def load_all_listings_df() -> pd.DataFrame:
                 "Price_Type": "DP / Clickbait" if r.is_dp_price else "Cash",
                 "Mileage_KM": r.odometer_km,
                 "Tax_Status": r.tax_status or "Unknown",
-                "BPKB": "Ada" if r.has_bpkb else "Tidak Ada (STNK Only)",
+                "BPKB": "Lengkap" if r.has_bpkb else "Tidak Ada",
                 "Plate_Code": r.plate_region or "-",
                 "Province": r.province or "-",
                 "City": r.city or "-",
@@ -164,81 +302,86 @@ def load_all_listings_df() -> pd.DataFrame:
         db.close()
 
 # ==========================================
-# SIDEBAR NAVIGATION & FILTERS
+# SIDEBAR NAVIGATION
 # ==========================================
-st.sidebar.title("MotorPrice ID")
-st.sidebar.caption("Used Motorcycle Intelligence & Scraping Platform")
-st.sidebar.markdown("---")
+with st.sidebar:
+    st.markdown("""
+    <div style="padding: 10px 0 16px 0;">
+        <div class="sidebar-title">MOTORPRICE ID</div>
+        <div class="sidebar-desc">Indonesian Used Motorcycle Intelligence & Valuation Engine</div>
+        <div class="status-pill"><div class="status-dot"></div> SYSTEM OPERATIONAL</div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("---")
 
-menu = st.sidebar.radio(
-    "Navigation Menu",
-    [
-        "Market Overview",
-        "Fair Market Value Calculator",
-        "Market Price Monitoring",
-        "Bargain & Arbitrage Deals",
-        "Raw Dataset Explorer",
-        "Scraper Control Center",
-        "Master Catalog"
-    ]
-)
+    menu = st.radio(
+        "NAVIGATION MODULE",
+        [
+            "Market Overview",
+            "Fair Market Value (FMV) Calculator",
+            "Market Price Monitoring & Quartiles",
+            "Bargain & Arbitrage Opportunities",
+            "Raw Scraped Dataset Explorer",
+            "Live Scraper & Crawler Center",
+            "Official Master Catalog (12 Years)"
+        ],
+        index=0
+    )
 
-st.sidebar.markdown("---")
-st.sidebar.caption("System Status: Online | Database: Operational")
+    st.markdown("---")
+    st.caption("Engine: Python 3.13 | DB: SQLite ORM | Scraping: Multi-Platform | Model Scope: 2014–2026")
 
 # ==========================================
 # 1. MARKET OVERVIEW
 # ==========================================
 if menu == "Market Overview":
-    st.title("Market Overview & Macro Analytics")
-    st.caption("Real-time summary of scraped used motorcycle listings and price distribution across Indonesia.")
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Market Overview & Macro Analytics</div>
+        <div class="app-header-subtitle">Real-time macro perspective on used motorcycle valuation, volume distribution, and price dynamics across Indonesia.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     df = load_all_listings_df()
 
     if df.empty:
-        st.info("Database listing saat ini masih kosong. Silakan buka menu 'Scraper Control Center' untuk menjalankan proses ingestion data.")
+        st.info("The listing database is currently empty. Run the ingestion process from the Scraper Control Center.")
     else:
         df_valid = df[df["Price_Type"] == "Cash"]
+        total_listings = len(df)
+        valid_cash_count = len(df_valid)
+        median_price = df_valid["Price"].median() if not df_valid.empty else 0
+        dp_count = len(df[df["Price_Type"] == "DP / Clickbait"])
 
-        # Top Metric Cards
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Total Listings Ingested</div>
-                <div class="metric-value">{len(df):,}</div>
+        # Top Executive KPI Cards
+        st.markdown(f"""
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Ingested Listings</div>
+                <div class="kpi-value">{total_listings:,}</div>
+                <div class="kpi-caption">Clean & deduplicated data points</div>
             </div>
-            """, unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Valid Cash Listings</div>
-                <div class="metric-value">{len(df_valid):,}</div>
+            <div class="kpi-card emerald">
+                <div class="kpi-label">Valid Cash Listings</div>
+                <div class="kpi-value">{valid_cash_count:,}</div>
+                <div class="kpi-caption">Verified real selling price</div>
             </div>
-            """, unsafe_allow_html=True)
-        with col3:
-            median_val = df_valid["Price"].median() if not df_valid.empty else 0
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Market Median Price</div>
-                <div class="metric-value">Rp {median_val:,.0f}</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Market Median Price</div>
+                <div class="kpi-value">Rp {median_price:,.0f}</div>
+                <div class="kpi-caption">Across all brands & year tiers</div>
             </div>
-            """, unsafe_allow_html=True)
-        with col4:
-            dp_count = len(df[df["Price_Type"] == "DP / Clickbait"])
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">Flagged DP / Clickbait</div>
-                <div class="metric-value">{dp_count:,}</div>
+            <div class="kpi-card rose">
+                <div class="kpi-label">Flagged DP / Clickbait</div>
+                <div class="kpi-value">{dp_count:,}</div>
+                <div class="kpi-caption">Isolated from FMV computation</div>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Charts Section
-        c1, c2 = st.columns(2)
-        with c1:
-            st.subheader("Distribution of Listings by Brand")
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            st.markdown('<div class="content-panel"><div class="panel-header">Listing Distribution by Manufacturer Brand</div>', unsafe_allow_html=True)
             brand_counts = df["Brand"].value_counts().reset_index()
             brand_counts.columns = ["Brand", "Total Listings"]
             fig_brand = px.bar(
@@ -246,31 +389,32 @@ if menu == "Market Overview":
                 x="Brand",
                 y="Total Listings",
                 color="Brand",
-                color_discrete_sequence=px.colors.qualitative.Prism,
+                color_discrete_sequence=["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"],
                 text_auto=True
             )
-            fig_brand.update_layout(showlegend=False, margin=dict(t=20, b=20, l=20, r=20))
+            fig_brand.update_layout(**DARK_PLOTLY_LAYOUT, showlegend=False)
             st.plotly_chart(fig_brand, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        with c2:
-            st.subheader("Price Distribution by Brand (Cash Only)")
+        with col_c2:
+            st.markdown('<div class="content-panel"><div class="panel-header">Price Distribution Spread by Brand (Cash Transactions)</div>', unsafe_allow_html=True)
             fig_box = px.box(
                 df_valid,
                 x="Brand",
                 y="Price",
                 color="Brand",
                 points="outliers",
-                color_discrete_sequence=px.colors.qualitative.Prism
+                color_discrete_sequence=["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"]
             )
             fig_box.update_layout(
+                **DARK_PLOTLY_LAYOUT,
                 showlegend=False,
-                yaxis=dict(title="Price (IDR)", tickformat=",.0f"),
-                margin=dict(t=20, b=20, l=20, r=20)
+                yaxis=dict(title="Price (IDR)", tickformat=",.0f", gridcolor="rgba(255, 255, 255, 0.06)")
             )
             st.plotly_chart(fig_box, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("Price Depreciation Trend Across Manufacturing Years")
+        st.markdown('<div class="content-panel"><div class="panel-header">12-Year Historical Price Depreciation Curve (2014–2026)</div>', unsafe_allow_html=True)
         year_trend = df_valid.dropna(subset=["Year"]).groupby(["Year", "Brand"])["Price"].median().reset_index()
         fig_trend = px.line(
             year_trend,
@@ -278,120 +422,133 @@ if menu == "Market Overview":
             y="Price",
             color="Brand",
             markers=True,
-            color_discrete_sequence=px.colors.qualitative.Safe
+            color_discrete_sequence=["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"]
         )
         fig_trend.update_layout(
-            yaxis=dict(title="Median Price (IDR)", tickformat=",.0f"),
-            xaxis=dict(title="Manufacturing Year", dtick=1),
-            margin=dict(t=20, b=20, l=20, r=20)
+            **DARK_PLOTLY_LAYOUT,
+            yaxis=dict(title="Median Price (IDR)", tickformat=",.0f", gridcolor="rgba(255, 255, 255, 0.06)"),
+            xaxis=dict(title="Manufacturing Production Year", dtick=1, gridcolor="rgba(255, 255, 255, 0.06)")
         )
         st.plotly_chart(fig_trend, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # 2. FAIR MARKET VALUE (FMV) CALCULATOR
 # ==========================================
-elif menu == "Fair Market Value Calculator":
-    st.title("Fair Market Value (FMV) Calculator")
-    st.caption("Estimate the current fair market price based on historical transactions, condition adjustment, and vehicle specifications.")
+elif menu == "Fair Market Value (FMV) Calculator":
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Fair Market Value (FMV) Calculator</div>
+        <div class="app-header-subtitle">Statistically estimated market price incorporating historical listings, depreciation models, document validity, and odometer mileage.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     db = get_db_session()
     try:
         brands = [b.name for b in db.query(MasterBrand).order_by(MasterBrand.name).all()]
         if not brands:
-            st.warning("Master catalog database is empty. Please run seeding from the Scraper Control Center.")
+            st.warning("Master catalog database is empty.")
         else:
-            col_in1, col_in2 = st.columns(2)
-            with col_in1:
-                selected_brand = st.selectbox("Vehicle Brand", brands)
-                brand_obj = db.query(MasterBrand).filter(MasterBrand.name == selected_brand).first()
-                models = [m.name for m in db.query(MasterModel).filter(MasterModel.brand_id == brand_obj.id).all()] if brand_obj else []
-                selected_model = st.selectbox("Vehicle Model", models if models else ["-"])
+            with st.container():
+                st.markdown('<div class="content-panel"><div class="panel-header">Vehicle Specification & Condition Parameters</div>', unsafe_allow_html=True)
+                col_in1, col_in2 = st.columns(2)
+                with col_in1:
+                    selected_brand = st.selectbox("Manufacturer Brand", brands)
+                    brand_obj = db.query(MasterBrand).filter(MasterBrand.name == selected_brand).first()
+                    models = [m.name for m in db.query(MasterModel).filter(MasterModel.brand_id == brand_obj.id).all()] if brand_obj else []
+                    selected_model = st.selectbox("Vehicle Model", models if models else ["-"])
 
-                model_obj = db.query(MasterModel).filter(MasterModel.name == selected_model, MasterModel.brand_id == brand_obj.id).first() if brand_obj else None
-                variants = db.query(MasterVariant).filter(MasterVariant.model_id == model_obj.id).all() if model_obj else []
-                variant_map = {v.variant_name: v for v in variants}
-                selected_variant_name = st.selectbox("Variant / Sub-Model", list(variant_map.keys()) if variant_map else ["-"])
+                    model_obj = db.query(MasterModel).filter(MasterModel.name == selected_model, MasterModel.brand_id == brand_obj.id).first() if brand_obj else None
+                    variants = db.query(MasterVariant).filter(MasterVariant.model_id == model_obj.id).all() if model_obj else []
+                    variant_map = {v.variant_name: v for v in variants}
+                    selected_variant_name = st.selectbox("Specific Variant / Generation", list(variant_map.keys()) if variant_map else ["-"])
 
-            with col_in2:
-                selected_var = variant_map.get(selected_variant_name)
-                min_yr = selected_var.release_year_start if selected_var else 2015
-                max_yr = selected_var.release_year_end if (selected_var and selected_var.release_year_end) else 2026
-                year_options = list(range(max_yr, min_yr - 1, -1))
-                selected_year = st.selectbox("Manufacturing Year", year_options if year_options else [2022])
+                with col_in2:
+                    selected_var = variant_map.get(selected_variant_name)
+                    min_yr = selected_var.release_year_start if selected_var else 2014
+                    max_yr = selected_var.release_year_end if (selected_var and selected_var.release_year_end) else 2026
+                    year_options = list(range(max_yr, min_yr - 1, -1))
+                    selected_year = st.selectbox("Manufacturing Year", year_options if year_options else [2022])
 
-                input_km = st.number_input("Odometer Mileage (KM)", min_value=0, max_value=200000, value=20000, step=1000)
-                input_tax = st.selectbox("Tax & Document Status", ["Tax Valid / Active (Surat Lengkap)", "Tax Expired 1 Year", "Tax Expired 2+ Years", "STNK Only (Non-BPKB)"])
+                    input_km = st.number_input("Odometer Mileage (KM)", min_value=0, max_value=200000, value=22000, step=1000)
+                    input_tax = st.selectbox("Tax & Legal Document Status", [
+                        "Tax Active / Long (Pajak Hidup & BPKB Lengkap)",
+                        "Tax Expired 1 Year (Pajak Mati 1 Tahun)",
+                        "Tax Expired 2+ Years (Pajak Mati 2+ Tahun)",
+                        "STNK Only / No BPKB (Non-BPKB / Yatim)"
+                    ])
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Calculate Fair Market Price", type="primary"):
-                pricing_engine = PricingAnalyticsEngine(db)
-                stats = pricing_engine.calculate_variant_pricing_stats(selected_var.id, year=selected_year) if selected_var else None
+                calc_btn = st.button("Calculate Fair Market Valuation", type="primary", use_container_width=True)
+                st.markdown('</div>', unsafe_allow_html=True)
 
-                base_price = stats["price_median"] if stats else (float(selected_var.official_msrp_new) * 0.70 if selected_var and selected_var.official_msrp_new else 18000000.0)
-                sample_count = stats["sample_count"] if stats else 0
+                if calc_btn or selected_var is not None:
+                    pricing_engine = PricingAnalyticsEngine(db)
+                    stats = pricing_engine.calculate_variant_pricing_stats(selected_var.id, year=selected_year) if selected_var else None
 
-                # Condition adjustments
-                adj_tax = 0.0
-                if "1 Year" in input_tax:
-                    adj_tax = -600000.0
-                elif "2+" in input_tax:
-                    adj_tax = -1200000.0
-                elif "STNK Only" in input_tax:
-                    adj_tax = - (base_price * 0.35)
+                    base_price = stats["price_median"] if stats else (float(selected_var.official_msrp_new) * 0.70 if selected_var and selected_var.official_msrp_new else 18000000.0)
+                    sample_count = stats["sample_count"] if stats else 0
 
-                expected_km = max(5000, (2026 - selected_year) * 8000)
-                km_diff = input_km - expected_km
-                adj_km = - (km_diff / 5000) * 250000.0
-                adj_km = max(-2000000.0, min(1000000.0, adj_km))
+                    adj_tax = 0.0
+                    if "1 Year" in input_tax:
+                        adj_tax = -650000.0
+                    elif "2+" in input_tax:
+                        adj_tax = -1400000.0
+                    elif "STNK Only" in input_tax:
+                        adj_tax = - (base_price * 0.35)
 
-                final_fmv = max(3000000.0, base_price + adj_tax + adj_km)
-                bargain_p25 = final_fmv * 0.92
-                premium_p75 = final_fmv * 1.08
+                    expected_km = max(5000, (2026 - selected_year) * 8500)
+                    km_diff = input_km - expected_km
+                    adj_km = - (km_diff / 5000) * 250000.0
+                    adj_km = max(-2500000.0, min(1200000.0, adj_km))
 
-                st.subheader("Valuation Results")
-                res1, res2, res3 = st.columns(3)
-                with res1:
+                    final_fmv = max(3500000.0, base_price + adj_tax + adj_km)
+                    bargain_p25 = final_fmv * 0.92
+                    premium_p75 = final_fmv * 1.08
+
                     st.markdown(f"""
-                    <div class="metric-card">
-                        <div class="metric-label">Bargain Target (P25)</div>
-                        <div class="metric-value" style="color: #059669;">Rp {bargain_p25:,.0f}</div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Recommended for quick purchase</div>
+                    <div class="val-result-box">
+                        <div style="font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px;">
+                            ESTIMATED FAIR MARKET VALUATION (FMV)
+                        </div>
+                        <div class="val-price-hero">Rp {final_fmv:,.0f}</div>
+                        <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 18px;">
+                            Vehicle: <strong>{selected_brand} {selected_model} - {selected_variant_name} ({selected_year})</strong> | Samples Analyzed: <strong>{sample_count} listings</strong>
+                        </div>
+                        <div class="kpi-grid" style="margin-bottom: 0;">
+                            <div class="kpi-card emerald" style="background: rgba(16, 185, 129, 0.06);">
+                                <div class="kpi-label" style="color: #34d399;">Bargain Target (P25)</div>
+                                <div class="kpi-value" style="color: #34d399; font-size: 22px;">Rp {bargain_p25:,.0f}</div>
+                                <div class="kpi-caption">Recommended quick buy limit</div>
+                            </div>
+                            <div class="kpi-card" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.4);">
+                                <div class="kpi-label" style="color: #60a5fa;">Market Median (FMV)</div>
+                                <div class="kpi-value" style="color: #60a5fa; font-size: 22px;">Rp {final_fmv:,.0f}</div>
+                                <div class="kpi-caption">Statistical equilibrium value</div>
+                            </div>
+                            <div class="kpi-card amber" style="background: rgba(245, 158, 11, 0.06);">
+                                <div class="kpi-label" style="color: #fbbf24;">Pristine / Collector (P75)</div>
+                                <div class="kpi-value" style="color: #fbbf24; font-size: 22px;">Rp {premium_p75:,.0f}</div>
+                                <div class="kpi-caption">Low KM / showroom condition</div>
+                            </div>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
-                with res2:
-                    st.markdown(f"""
-                    <div class="metric-card" style="border: 2px solid #2563eb;">
-                        <div class="metric-label">Estimated Fair Market Value (FMV)</div>
-                        <div class="metric-value" style="color: #2563eb;">Rp {final_fmv:,.0f}</div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Median statistical fair value</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with res3:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div class="metric-label">Premium / Pristine (P75)</div>
-                        <div class="metric-value" style="color: #4f46e5;">Rp {premium_p75:,.0f}</div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Low mileage / collector condition</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.info(f"Model: {selected_brand} {selected_model} - {selected_variant_name} ({selected_year}) | Market Data Samples: {sample_count} listings | Baseline MSRP: Rp {float(selected_var.official_msrp_new):,.0f}" if selected_var and selected_var.official_msrp_new else f"Model: {selected_brand} {selected_model} ({selected_year})")
     finally:
         db.close()
 
 # ==========================================
-# 3. MARKET PRICE MONITORING TABLE
+# 3. MARKET PRICE MONITORING & QUARTILES
 # ==========================================
-elif menu == "Market Price Monitoring":
-    st.title("Market Price Monitoring & Statistical Quartiles")
-    st.caption("Aggregated market statistics grouped by variant, year, and region.")
+elif menu == "Market Price Monitoring & Quartiles":
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Market Price Monitoring & Statistical Quartiles</div>
+        <div class="app-header-subtitle">Standardized statistical benchmark table showing Min, P25 Bargain, Median FMV, P75 Premium, and Max prices.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     db = get_db_session()
     try:
-        engine = PricingAnalyticsEngine(db)
-        engine.refresh_daily_market_stats()
-
         stats_query = db.query(
             MarketPriceStats, MasterVariant, MasterModel, MasterBrand
         ).join(
@@ -403,7 +560,7 @@ elif menu == "Market Price Monitoring":
         ).all()
 
         if not stats_query:
-            st.info("No aggregated market price records available yet. Please run scraping from the Scraper Control Center.")
+            st.info("Market statistics table is being computed. Please refresh or run ingestion.")
         else:
             table_rows = []
             for s, var, model, brand in stats_query:
@@ -413,7 +570,7 @@ elif menu == "Market Price Monitoring":
                     "Variant": var.variant_name,
                     "Year": s.year,
                     "Region": s.city if s.city else "National",
-                    "Sample_Count": s.sample_count,
+                    "Samples": s.sample_count,
                     "Min_Price": float(s.price_min),
                     "P25_Bargain": float(s.price_p25),
                     "Median_FMV": float(s.price_median),
@@ -423,16 +580,22 @@ elif menu == "Market Price Monitoring":
                 })
             df_stats = pd.DataFrame(table_rows)
 
-            # Filtering Controls
-            f_col1, f_col2 = st.columns(2)
+            st.markdown('<div class="content-panel"><div class="panel-header">Catalog Filter Parameters</div>', unsafe_allow_html=True)
+            f_col1, f_col2, f_col3 = st.columns(3)
             with f_col1:
-                sel_brands = st.multiselect("Filter Brand", options=sorted(df_stats["Brand"].unique()), default=sorted(df_stats["Brand"].unique()))
+                sel_brands = st.multiselect("Manufacturer Brand", options=sorted(df_stats["Brand"].unique()), default=sorted(df_stats["Brand"].unique()))
             with f_col2:
-                sel_models = st.multiselect("Filter Model", options=sorted(df_stats["Model"].unique()), default=[])
+                available_models = sorted(df_stats[df_stats["Brand"].isin(sel_brands)]["Model"].unique()) if sel_brands else sorted(df_stats["Model"].unique())
+                sel_models = st.multiselect("Model Series", options=available_models, default=[])
+            with f_col3:
+                sel_years = st.multiselect("Production Year", options=sorted(df_stats["Year"].unique(), reverse=True), default=[])
+            st.markdown('</div>', unsafe_allow_html=True)
 
             filtered_df = df_stats[df_stats["Brand"].isin(sel_brands)]
             if sel_models:
                 filtered_df = filtered_df[filtered_df["Model"].isin(sel_models)]
+            if sel_years:
+                filtered_df = filtered_df[filtered_df["Year"].isin(sel_years)]
 
             st.dataframe(
                 filtered_df.sort_values(by=["Brand", "Model", "Year"], ascending=[True, True, False]),
@@ -443,7 +606,8 @@ elif menu == "Market Price Monitoring":
                     "Median_FMV": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "P75_Premium": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Max_Price": st.column_config.NumberColumn(format="Rp %,.0f"),
-                    "Official_MSRP": st.column_config.NumberColumn(format="Rp %,.0f")
+                    "Official_MSRP": st.column_config.NumberColumn(format="Rp %,.0f"),
+                    "Samples": st.column_config.NumberColumn(format="%d units")
                 },
                 hide_index=True
             )
@@ -451,33 +615,42 @@ elif menu == "Market Price Monitoring":
         db.close()
 
 # ==========================================
-# 4. BARGAIN & ARBITRAGE DEALS
+# 4. BARGAIN & ARBITRAGE OPPORTUNITIES
 # ==========================================
-elif menu == "Bargain & Arbitrage Deals":
-    st.title("Bargain Hunter & Arbitrage Opportunities")
-    st.caption("Listings priced significantly below the statistical fair market median with complete legal documentation.")
+elif menu == "Bargain & Arbitrage Opportunities":
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Bargain Hunter & Arbitrage Engine</div>
+        <div class="app-header-subtitle">Real-time identification of motorcycle listings priced significantly below statistical FMV with verified documents.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     db = get_db_session()
     try:
         engine = PricingAnalyticsEngine(db)
-        threshold = st.slider("Minimum Discount Percentage (%)", min_value=5.0, max_value=35.0, value=10.0, step=1.0)
-        deals = engine.find_hot_deals(discount_threshold_pct=threshold)
+        st.markdown('<div class="content-panel"><div class="panel-header">Arbitrage Discovery Threshold</div>', unsafe_allow_html=True)
+        col_s1, col_s2 = st.columns([3, 1])
+        with col_s1:
+            threshold = st.slider("Minimum Discount Below Market Median (%)", min_value=5.0, max_value=35.0, value=12.0, step=1.0)
+        with col_s2:
+            deals = engine.find_hot_deals(discount_threshold_pct=threshold)
+            st.metric("Identified Deals", f"{len(deals)} Units")
+        st.markdown('</div>', unsafe_allow_html=True)
 
         if not deals:
-            st.info(f"No listings found with discount >= {threshold}% below market median.")
+            st.info(f"No listings currently match the discount threshold of >= {threshold}%. Try lowering the threshold percentage.")
         else:
-            st.write(f"Found **{len(deals)}** potential arbitrage opportunities:")
             deals_df = pd.DataFrame(deals)
             st.dataframe(
                 deals_df[[
                     "motor_name", "year", "price", "fair_market_value",
                     "saving_amount", "discount_pct", "tax_status", "city", "url"
                 ]].rename(columns={
-                    "motor_name": "Vehicle",
+                    "motor_name": "Vehicle Model",
                     "year": "Year",
                     "price": "Listing Price",
                     "fair_market_value": "Market FMV",
-                    "saving_amount": "Savings (IDR)",
+                    "saving_amount": "Estimated Savings",
                     "discount_pct": "Discount %",
                     "tax_status": "Tax Status",
                     "city": "Location",
@@ -486,9 +659,9 @@ elif menu == "Bargain & Arbitrage Deals":
                 column_config={
                     "Listing Price": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Market FMV": st.column_config.NumberColumn(format="Rp %,.0f"),
-                    "Savings (IDR)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                    "Estimated Savings": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Discount %": st.column_config.NumberColumn(format="%.1f%%"),
-                    "Listing URL": st.column_config.LinkColumn("View Listing")
+                    "Listing URL": st.column_config.LinkColumn("View Listing Link")
                 },
                 hide_index=True,
                 use_container_width=True
@@ -497,27 +670,32 @@ elif menu == "Bargain & Arbitrage Deals":
         db.close()
 
 # ==========================================
-# 5. RAW DATASET EXPLORER
+# 5. RAW SCRAPED DATASET EXPLORER
 # ==========================================
-elif menu == "Raw Dataset Explorer":
-    st.title("Raw Scraped Dataset Explorer")
-    st.caption("Full granular table containing all scraped items, AI normalized fields, and raw platform metadata.")
+elif menu == "Raw Scraped Dataset Explorer":
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Raw Scraped Dataset Explorer</div>
+        <div class="app-header-subtitle">Granular dataset table with advanced filtering, full text search, entity mapping, and instant CSV export.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     df_raw = load_all_listings_df()
 
     if df_raw.empty:
-        st.info("The raw dataset is empty. Run the scraper in the control center to fetch listings.")
+        st.info("The raw dataset is empty.")
     else:
-        # Search and Filter Bars
+        st.markdown('<div class="content-panel"><div class="panel-header">Granular Filters & Search</div>', unsafe_allow_html=True)
         f1, f2, f3, f4 = st.columns(4)
         with f1:
-            search_kw = st.text_input("Search Title / Keyword", "")
+            search_kw = st.text_input("Search Keyword / Title", "")
         with f2:
-            brand_filter = st.multiselect("Brand", options=sorted(df_raw["Brand"].unique()), default=[])
+            brand_filter = st.multiselect("Manufacturer Brand", options=sorted(df_raw["Brand"].unique()), default=[])
         with f3:
-            price_type_filter = st.selectbox("Price Type", ["All", "Cash Only", "DP / Clickbait Only"])
+            price_type_filter = st.selectbox("Pricing Category", ["All Listings", "Cash Only", "DP / Clickbait Only"])
         with f4:
             tax_filter = st.multiselect("Tax Status", options=sorted(df_raw["Tax_Status"].unique()), default=[])
+        st.markdown('</div>', unsafe_allow_html=True)
 
         filtered = df_raw.copy()
         if search_kw:
@@ -531,7 +709,19 @@ elif menu == "Raw Dataset Explorer":
         if tax_filter:
             filtered = filtered[filtered["Tax_Status"].isin(tax_filter)]
 
-        st.markdown(f"**Displaying {len(filtered):,} records:**")
+        col_m1, col_m2 = st.columns([3, 1])
+        with col_m1:
+            st.markdown(f"**Showing {len(filtered):,} of {len(df_raw):,} total records:**")
+        with col_m2:
+            csv_data = filtered.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="Export Filtered CSV",
+                data=csv_data,
+                file_name=f"used_motorcycle_dataset_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+
         st.dataframe(
             filtered[[
                 "ID", "Platform", "Title", "Brand", "Model", "Variant", "Year",
@@ -540,39 +730,37 @@ elif menu == "Raw Dataset Explorer":
             column_config={
                 "Price": st.column_config.NumberColumn(format="Rp %,.0f"),
                 "Mileage_KM": st.column_config.NumberColumn(format="%,.0f km"),
-                "URL": st.column_config.LinkColumn("Listing Link")
+                "URL": st.column_config.LinkColumn("Listing URL")
             },
             hide_index=True,
             use_container_width=True
         )
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        # Export Buttons
-        csv_data = filtered.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="Download Current Dataset (CSV)",
-            data=csv_data,
-            file_name=f"used_motorcycle_dataset_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-            mime="text/csv"
-        )
-
 # ==========================================
-# 6. SCRAPER CONTROL CENTER
+# 6. LIVE SCRAPER & CRAWLER CENTER
 # ==========================================
-elif menu == "Scraper Control Center":
-    st.title("Scraper Ingestion & Crawler Control Center")
-    st.caption("Trigger on-demand data extraction from supported marketplaces (OLX Indonesia, etc.) with real-time AI normalization.")
+elif menu == "Live Scraper & Crawler Center":
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Live Scraper & Crawler Control Center</div>
+        <div class="app-header-subtitle">Execute on-demand scraping across supported Indonesian marketplaces with AI entity normalization and scam filtering.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
+    st.markdown('<div class="content-panel"><div class="panel-header">Scraper Execution Parameters</div>', unsafe_allow_html=True)
     sc1, sc2 = st.columns(2)
     with sc1:
-        query_input = st.text_input("Search Keyword Query", "Vario 150")
-        target_platform = st.selectbox("Target Platform", ["OLX Indonesia", "Momotor.id (API)", "Facebook Marketplace (Playwright Stealth)"])
+        query_input = st.text_input("Target Keyword Query", "Honda Beat Street")
+        target_platform = st.selectbox("Marketplace Platform", ["OLX Indonesia (JSON API)", "Momotor.id (REST Endpoint)", "Facebook Marketplace (Stealth Crawler)"])
     with sc2:
-        loc_code = st.selectbox("Region Scope", ["dki_jakarta", "jawa_barat", "jawa_timur", "jawa_tengah", "banten", "bali", "indonesia"])
-        page_depth = st.number_input("Crawl Page Depth (Pages)", min_value=1, max_value=10, value=1)
+        loc_code = st.selectbox("Region Coverage", ["dki_jakarta", "jawa_barat", "jawa_timur", "jawa_tengah", "banten", "bali", "indonesia"])
+        page_depth = st.number_input("Crawl Page Depth", min_value=1, max_value=10, value=1)
 
-    if st.button("Start Scraping & Ingestion Task", type="primary"):
-        with st.spinner(f"Running scraper for '{query_input}' in {loc_code}..."):
+    start_crawl = st.button("Start Live Scraping & Ingestion Task", type="primary", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if start_crawl:
+        with st.spinner(f"Crawling listings for '{query_input}' in {loc_code}..."):
             db = get_db_session()
             try:
                 matcher = EntityMatcher(db)
@@ -636,18 +824,22 @@ elif menu == "Scraper Control Center":
                         added_count += 1
 
                 db.commit()
-                st.success(f"Ingestion completed. Total fetched: {len(raw_items)} | Added/Updated: {added_count} | AI Matched: {matched_count} | Flagged DP: {dp_count}")
+                st.success(f"Ingestion Task Completed Successfully: Fetched: {len(raw_items)} | Added: {added_count} | AI Matched: {matched_count} | Flagged DP: {dp_count}")
             except Exception as ex:
-                st.error(f"Error during ingestion task: {ex}")
+                st.error(f"Scraper Error: {ex}")
             finally:
                 db.close()
 
 # ==========================================
-# 7. MASTER CATALOG
+# 7. OFFICIAL MASTER CATALOG (12 YEARS)
 # ==========================================
-elif menu == "Master Catalog":
-    st.title("Official Motorcycle Master Catalog")
-    st.caption("Standardized database of motorcycle brands, models, engine specifications, and manufacturer release years.")
+elif menu == "Official Master Catalog (12 Years)":
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-header-title">Official Motorcycle Master Catalog (2014–2026)</div>
+        <div class="app-header-subtitle">Verified database of manufacturer brands, models, engine displacement CC, variant generations, and official MSRP.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     db = get_db_session()
     try:
@@ -667,18 +859,40 @@ elif menu == "Master Catalog":
                 "Model": m.name,
                 "Category": m.category,
                 "Engine (CC)": m.engine_capacity_cc,
-                "Variant Name": v.variant_name,
+                "Variant Generation": v.variant_name,
                 "Release Start": v.release_year_start,
-                "Release End": v.release_year_end if v.release_year_end else "Present",
-                "Official MSRP": float(v.official_msrp_new) if v.official_msrp_new else None,
+                "Release End": v.release_year_end if v.release_year_end else "Present (2026)",
+                "Official MSRP (New)": float(v.official_msrp_new) if v.official_msrp_new else None,
                 "Transmission": v.transmission_type or "Automatic"
             })
 
         df_cat = pd.DataFrame(rows)
+
+        st.markdown(f"""
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Covered Brands</div>
+                <div class="kpi-value">{df_cat['Brand'].nunique()} Brands</div>
+                <div class="kpi-caption">Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki</div>
+            </div>
+            <div class="kpi-card emerald">
+                <div class="kpi-label">Total Models</div>
+                <div class="kpi-value">{df_cat['Model'].nunique()} Models</div>
+                <div class="kpi-caption">Across all segments</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Master Variants</div>
+                <div class="kpi-value">{len(df_cat)} Variants</div>
+                <div class="kpi-caption">12-year production span (2014-2026)</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
         st.dataframe(
             df_cat.sort_values(by=["Brand", "Model", "Release Start"], ascending=[True, True, False]),
             column_config={
-                "Official MSRP": st.column_config.NumberColumn(format="Rp %,.0f")
+                "Official MSRP (New)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                "Engine (CC)": st.column_config.NumberColumn(format="%d cc")
             },
             hide_index=True,
             use_container_width=True
