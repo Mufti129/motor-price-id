@@ -1,7 +1,7 @@
 # DOKUMENTASI LENGKAP & SPESIFIKASI TEKNIS SISTEM
 ## MOTORPRICE ID — USED MOTORCYCLE INTELLIGENCE & VALUATION ENGINE
 **Penulis & Pengembang:** Mukhammad Rekza Mufti (Data & System Analyst)  
-**Versi Sistem:** v2.4 (Enterprise Edition)  
+**Versi Sistem:** v2.5 (Wholesale & Auction Intelligence Edition)  
 **Waktu Rilis:** Oktober 2026  
 **Repositori GitHub:** [https://github.com/Mufti129/motor-price-id](https://github.com/Mufti129/motor-price-id)  
 **Platform Deploy:** Streamlit Community Cloud (Python 3.13 Runtime)  
@@ -29,11 +29,11 @@ Pasar sepeda motor bekas di Indonesia merupakan salah satu ekosistem transaksi k
 
 ### 1.2 Tujuan Pembangunan Sistem MotorPrice ID
 MotorPrice ID dibangun sebagai platform terpadu untuk:
-- Mengumpulkan data dari berbagai marketplace secara otomatis (*Automated Multi-Source Scraper*).
+- Mengumpulkan data dari marketplace retail (OLX, Facebook Marketplace, Momotor.id) dan balai lelang resmi (JBA Indonesia, IBID Astra).
 - Membersihkan dan menormalisasi teks iklan menggunakan NLP dan kamus otomotif Indonesia.
-- Melakukan pemetaan entitas fuzzy (*Entity Resolution*) ke katalog master resmi 12 tahun terakhir.
-- Menghitung Nilai Pasar Wajar (*Fair Market Value / FMV*), Kuartil Harga, dan Depresiasi Riil berdasarkan model ekonometrika dan riset ahli.
-- Mengidentifikasi peluang keuntungan arbitrase (*Bargain Hunter Deals*).
+- Melakukan pemetaan entitas fuzzy (*Entity Resolution*) ke katalog master 17 merk, 140 model, dan 419 varian resmi.
+- Menghitung Nilai Pasar Wajar (*Fair Market Value / FMV*), 3-Tier Price Corridors, Kuartil Harga, dan Depresiasi Riil.
+- Mengidentifikasi peluang keuntungan arbitrase retail (*Bargain Hunter Deals*) dan margin kotor dealer lelang (*Dealer Gross Spread Radar*).
 
 ---
 
@@ -42,34 +42,39 @@ MotorPrice ID dibangun sebagai platform terpadu untuk:
 ```text
 +-----------------------------------------------------------------------------------+
 |                        1. DATA HARVESTING & INGESTION                             |
-|  - OLX Indonesia API Scraper      - Facebook Marketplace       - Momotor.id       |
+|  - RETAIL LAYER: OLX Indonesia API, Facebook Marketplace, Momotor.id (17,000 Ads) |
+|  - WHOLESALE LAYER: JBA Indonesia & IBID Astra Lelang Resmi (5,800+ Auction Lots) |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
 |                   2. AI & NLP DATA REFINEMENT PIPELINE                            |
 |  - Indonesian Slang Dictionary    - Scam & DP Clickbait Filter                    |
-|  - Mileage & Tax NLP Extractor    - RapidFuzz Entity Matcher (Levenshtein/JW)     |
+|  - Mileage & Tax NLP Extractor    - RapidFuzz Entity Matcher (419 Master Variants)|
+|  - Technical Inspection Normalizer (Grade Mesin A/B/C/D & Rangka/Bodi)            |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
 |                     3. RELATIONAL DATABASE LAYER (SQLite)                         |
-|  - master_brands   - master_models   - master_variants (MSRP 2014-2026)           |
-|  - scraped_listings (6,000 Data)     - market_price_stats (Snapshot Daily FMV)    |
+|  - master_brands (17)      - master_models (140)   - master_variants (419)        |
+|  - scraped_listings (17K)  - auction_listings (5.8K)                              |
+|  - market_price_stats (FMV)- wholesale_price_stats (Clearance & Wholesale Limits) |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
 |                 4. ECONOMETRIC & PRICING ANALYTICS ENGINE                         |
-|  - Akerlof Double-Declining Depreciation     - Lancaster Hedonic Condition Pricing|
+|  - 3-Tier Price Corridor (Floor Limit -> Wholesale Hammer -> Retail FMV)          |
+|  - Dealer Gross Spread & Net Profit Margin Analyzer                               |
 |  - Tukey Interquartile Range (P25, FMV, P75) - Fama Arbitrage Opportunity Scanner |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
 |             5. ENTERPRISE STREAMLIT USER INTERFACE & VISUALIZATION                |
-|  - Executive Header & KPI Cards              - Plotly Dark Analytics Charts       |
+|  - 3-Tier Price Corridor Interactive Chart   - Dealer Profitability Margin Radar  |
+|  - Technical Inspection Lot Explorer         - Plotly Dark Analytics Charts       |
 |  - Real Depreciation (%) Matrix              - 1-Click Batch Scraper & CSV Export |
 +-----------------------------------------------------------------------------------+
 ```

@@ -46,6 +46,7 @@ class MasterVariant(Base):
 
     model = relationship("MasterModel", back_populates="variants")
     scraped_listings = relationship("ScrapedListing", back_populates="matched_variant")
+    auction_lots = relationship("AuctionLot", back_populates="matched_variant")
 
 
 class ScrapedListing(Base):
@@ -93,6 +94,83 @@ class ScrapedListing(Base):
     matched_variant = relationship("MasterVariant", back_populates="scraped_listings")
 
 
+class AuctionLot(Base):
+    """
+    Unit Lot Balai Lelang Otomotif Resmi (JBA Indonesia & IBID Astra).
+    Mencatat data inspeksi teknis, grade mesin/bodi, harga dasar limit, dan harga ketok palu final.
+    """
+    __tablename__ = "auction_listings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    source_platform = Column(String(50), nullable=False, index=True) # 'jba_indonesia', 'ibid_astra'
+    lot_number = Column(String(50), nullable=False, index=True)
+    session_id = Column(String(100), nullable=True)
+    auction_date = Column(Date, nullable=False, index=True)
+    pool_city = Column(String(100), nullable=False, index=True)
+    lane = Column(String(50), nullable=True)
+
+    # Resolusi Varian
+    matched_variant_id = Column(Integer, ForeignKey("master_variants.id"), nullable=True, index=True)
+    claimed_year = Column(Integer, nullable=True, index=True)
+    color = Column(String(50), nullable=True)
+    license_plate = Column(String(30), nullable=True)
+    plate_region = Column(String(20), nullable=True)
+
+    # Hasil Inspeksi & Kondisi Fisik
+    odometer_km = Column(Integer, nullable=True)
+    grade_engine = Column(String(10), nullable=True) # 'A', 'B', 'C', 'D', 'E'
+    grade_frame_body = Column(String(10), nullable=True) # 'A', 'B', 'C', 'D'
+    overall_score = Column(String(20), nullable=True) # ACV score or overall grade
+    engine_condition = Column(String(100), nullable=True) # 'Hidup Normal', 'Kasar', 'Mati Total'
+    inspection_notes = Column(Text, nullable=True)
+
+    # Legalitas & Dokumen
+    stnk_status = Column(String(50), default="Ada")
+    tax_status = Column(String(50), default="Hidup")
+    bpkb_status = Column(String(50), default="Ready (Asli)")
+    faktur_status = Column(Boolean, default=True)
+
+    # Data Harga & Hasil Lelang
+    base_limit_price = Column(Numeric(15, 2), nullable=False) # Harga Dasar Pembukaan
+    hammer_price = Column(Numeric(15, 2), nullable=True) # Harga Ketok Palu Terbentuk
+    admin_fee = Column(Numeric(15, 2), default=500000.0) # Biaya admin lelang
+    auction_status = Column(String(30), default="Sold") # 'Sold', 'No Bid', 'Withdrawn'
+    bid_count = Column(Integer, default=1)
+
+    url = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("source_platform", "lot_number", "auction_date", name="uq_auction_platform_lot_date"),
+    )
+
+    matched_variant = relationship("MasterVariant", back_populates="auction_lots")
+
+
+class WholesalePriceStats(Base):
+    """
+    Agregasi Statistik Harga Wholesale & Lelang per Varian per Tanggal Sesi.
+    """
+    __tablename__ = "wholesale_price_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    stat_date = Column(Date, nullable=False, default=datetime.utcnow().date, index=True)
+    variant_id = Column(Integer, ForeignKey("master_variants.id"), nullable=False)
+    year = Column(Integer, nullable=False)
+    pool_city = Column(String(100), nullable=True)
+
+    sample_count = Column(Integer, nullable=False)
+    avg_base_price = Column(Numeric(15, 2))
+    median_hammer_price = Column(Numeric(15, 2))
+    min_base_price = Column(Numeric(15, 2))
+    max_hammer_price = Column(Numeric(15, 2))
+    clearance_rate_pct = Column(Numeric(5, 2), default=85.0)
+
+    __table_args__ = (
+        UniqueConstraint("stat_date", "variant_id", "year", "pool_city", name="uq_wholesale_stat_date_var_year_city"),
+    )
+
+
 class MarketPriceStats(Base):
     __tablename__ = "market_price_stats"
 
@@ -112,3 +190,4 @@ class MarketPriceStats(Base):
     __table_args__ = (
         UniqueConstraint("stat_date", "variant_id", "year", "city", name="uq_stat_date_var_year_city"),
     )
+

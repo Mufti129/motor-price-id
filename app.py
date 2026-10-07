@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from models.database import SessionLocal, init_db
-from models.catalog import MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats
+from models.catalog import (
+    MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
+    AuctionLot, WholesalePriceStats
+)
 from data.seed_master_motor import seed_master_motor_database
 from scrapers.olx_scraper import OLXMotorScraper
 from pipeline.normalizer import ListingNormalizer
@@ -351,6 +354,11 @@ def ensure_database_initialized():
         listing_count = db.query(ScrapedListing).count()
         if listing_count < 100:
             generate_massive_dataset(target_per_brand=1000)
+        
+        auction_count = db.query(AuctionLot).count()
+        if auction_count < 100:
+            from data.seed_auction_dataset import seed_auction_database
+            seed_auction_database()
     except Exception:
         seed_master_motor_database()
     finally:
@@ -425,6 +433,85 @@ def load_all_listings_df() -> pd.DataFrame:
     finally:
         db.close()
 
+@st.cache_data(ttl=60)
+def load_all_auction_lots_df() -> pd.DataFrame:
+    db = get_db_session()
+    try:
+        results = db.query(
+            AuctionLot.id,
+            AuctionLot.source_platform,
+            AuctionLot.lot_number,
+            AuctionLot.session_id,
+            AuctionLot.auction_date,
+            AuctionLot.pool_city,
+            AuctionLot.lane,
+            AuctionLot.claimed_year,
+            AuctionLot.color,
+            AuctionLot.license_plate,
+            AuctionLot.plate_region,
+            AuctionLot.odometer_km,
+            AuctionLot.grade_engine,
+            AuctionLot.grade_frame_body,
+            AuctionLot.overall_score,
+            AuctionLot.engine_condition,
+            AuctionLot.inspection_notes,
+            AuctionLot.stnk_status,
+            AuctionLot.tax_status,
+            AuctionLot.bpkb_status,
+            AuctionLot.base_limit_price,
+            AuctionLot.hammer_price,
+            AuctionLot.admin_fee,
+            AuctionLot.auction_status,
+            AuctionLot.bid_count,
+            AuctionLot.url,
+            MasterBrand.name.label("brand_name"),
+            MasterModel.name.label("model_name"),
+            MasterVariant.variant_name
+        ).outerjoin(
+            MasterVariant, AuctionLot.matched_variant_id == MasterVariant.id
+        ).outerjoin(
+            MasterModel, MasterVariant.model_id == MasterModel.id
+        ).outerjoin(
+            MasterBrand, MasterModel.brand_id == MasterBrand.id
+        ).all()
+
+        if not results:
+            return pd.DataFrame()
+
+        records = []
+        for r in results:
+            records.append({
+                "ID": r.id,
+                "Platform": "JBA Indonesia" if r.source_platform == "jba_indonesia" else "IBID Astra",
+                "Lot_No": r.lot_number,
+                "Auction_Date": r.auction_date,
+                "Pool_City": r.pool_city,
+                "Brand": r.brand_name if r.brand_name else "Unassigned",
+                "Model": r.model_name if r.model_name else "Unassigned",
+                "Variant": r.variant_name if r.variant_name else "Unmatched",
+                "Year": r.claimed_year,
+                "Color": r.color or "-",
+                "License_Plate": r.license_plate or "-",
+                "Mileage_KM": r.odometer_km or 0,
+                "Grade_Engine": r.grade_engine or "-",
+                "Grade_Body": r.grade_frame_body or "-",
+                "Overall_Score": r.overall_score or "-",
+                "Engine_Cond": r.engine_condition or "-",
+                "Inspection_Notes": r.inspection_notes or "-",
+                "STNK": r.stnk_status or "Ada",
+                "Tax_Status": r.tax_status or "Hidup",
+                "BPKB": r.bpkb_status or "Ready (Asli)",
+                "Base_Limit_Price": float(r.base_limit_price),
+                "Hammer_Price": float(r.hammer_price) if r.hammer_price else None,
+                "Admin_Fee": float(r.admin_fee) if r.admin_fee else 500000.0,
+                "Status": r.auction_status or "Sold",
+                "Bids": r.bid_count or 0,
+                "URL": r.url or ""
+            })
+        return pd.DataFrame(records)
+    finally:
+        db.close()
+
 # ==============================================================================
 # SIDEBAR NAVIGATION
 # ==============================================================================
@@ -445,6 +532,7 @@ with st.sidebar:
             "Fair Market Value (FMV) Calculator",
             "Market Price Monitoring & Quartiles",
             "Bargain & Arbitrage Opportunities",
+            "Wholesale & Auction Intelligence (JBA & IBID)",
             "Raw Scraped Dataset Explorer",
             "Live Scraper & Crawler Center",
             "Official Master Catalog (12 Years)",
@@ -457,7 +545,7 @@ with st.sidebar:
     st.markdown("""
     <div class="info-box-blue" style="padding: 12px 14px; margin-bottom: 10px;">
         <div class="info-box-title" style="font-size: 0.80rem;">Catalog Scope</div>
-        <div class="info-box-desc" style="font-size: 0.74rem;">17 Brands | 140 Models | 419 Master Variants (2014–2026)</div>
+        <div class="info-box-desc" style="font-size: 0.74rem;">17 Brands | 140 Models | 419 Variants | 17,000 Retail | 5,800+ Lots (2014–2026)</div>
     </div>
     """, unsafe_allow_html=True)
     st.caption("Engine: Python 3.13 | DB: SQLite ORM | Platform: Streamlit Cloud")
@@ -860,7 +948,355 @@ elif menu == "Bargain & Arbitrage Opportunities":
 
 
 # ==============================================================================
-# 5. RAW SCRAPED DATASET EXPLORER
+# 5. WHOLESALE & AUCTION INTELLIGENCE (JBA & IBID)
+# ==============================================================================
+elif menu == "Wholesale & Auction Intelligence (JBA & IBID)":
+    st.markdown("""
+    <div class="hero-appbar">
+        <div class="hero-title">Wholesale & Auction Intelligence (JBA & IBID)</div>
+        <div class="hero-subtitle">Dual-tier price intelligence comparing wholesale auction liquidation values (JBA Indonesia & IBID Astra) against retail market asking prices (OLX, FB, Momotor).</div>
+        <div class="hero-tags">
+            <span class="hero-tag-pill">5,800+ Official Lots</span>
+            <span class="hero-tag-pill">JBA & IBID Astra</span>
+            <span class="hero-tag-pill">3-Tier Price Corridors</span>
+            <span class="hero-tag-pill">Grade A/B/C/D Inspections</span>
+            <span class="hero-tag-pill">Dealer Margin Analytics</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    tab_corridor, tab_radar, tab_lots = st.tabs([
+        "3-Tier Price Corridor & Valuation",
+        "Dealer Gross Spread & Profitability Radar",
+        "Auction Lot Explorer & Inspection Grades"
+    ])
+
+    # --------------------------------------------------------------------------
+    # TAB 1: 3-TIER PRICE CORRIDOR & VALUATION
+    # --------------------------------------------------------------------------
+    with tab_corridor:
+        st.markdown("### 3-Tier Price Corridor & Valuation Analysis")
+        st.caption("Pilih merk, model, varian, dan tahun untuk membedah rantai harga dari Harga Dasar Lelang (Floor), Harga Ketok Palu (Wholesale), hingga Fair Market Value Retail Konsumen.")
+
+        db = get_db_session()
+        try:
+            brands = db.query(MasterBrand).filter(MasterBrand.is_active == True).order_by(MasterBrand.name).all()
+            brand_names = [b.name for b in brands]
+
+            col_b, col_m, col_v, col_y = st.columns(4)
+            with col_b:
+                selected_brand_name = st.selectbox("1. Brand", brand_names, index=0 if "Honda" not in brand_names else brand_names.index("Honda"), key="auc_b")
+                brand_obj = next((b for b in brands if b.name == selected_brand_name), None)
+
+            models = db.query(MasterModel).filter(MasterModel.brand_id == brand_obj.id).order_by(MasterModel.name).all() if brand_obj else []
+            model_names = [m.name for m in models]
+
+            with col_m:
+                selected_model_name = st.selectbox("2. Model", model_names, index=0 if model_names else None, key="auc_m")
+                model_obj = next((m for m in models if m.name == selected_model_name), None)
+
+            variants = db.query(MasterVariant).filter(MasterVariant.model_id == model_obj.id).order_by(MasterVariant.variant_name).all() if model_obj else []
+            variant_dict = {v.variant_name: v for v in variants}
+
+            with col_v:
+                selected_var_name = st.selectbox("3. Master Variant", list(variant_dict.keys()), index=0 if variant_dict else None, key="auc_v")
+                var_obj = variant_dict.get(selected_var_name)
+
+            with col_y:
+                if var_obj:
+                    min_y = var_obj.release_year_start
+                    max_y = var_obj.release_year_end or 2026
+                    year_opts = list(range(min_y, max_y + 1))
+                    selected_year = st.selectbox("4. Production Year", year_opts, index=len(year_opts)-1 if year_opts else 0, key="auc_y")
+                else:
+                    selected_year = 2023
+
+            if var_obj and selected_year:
+                engine = PricingAnalyticsEngine(db)
+                corridor = engine.calculate_dual_tier_corridor(var_obj.id, selected_year)
+
+                if corridor:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    m1, m2, m3, m4, m5 = st.columns(5)
+                    with m1:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-title">1. FLOOR LIMIT (LELANG)</div>
+                            <div class="metric-value" style="color: #64748b; font-size: 1.25rem;">Rp {corridor['base_limit_floor']:,.0f}</div>
+                            <div class="metric-delta">Harga Pembukaan Lelang</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with m2:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-title">2. WHOLESALE HAMMER</div>
+                            <div class="metric-value" style="color: #3b82f6; font-size: 1.25rem;">Rp {corridor['wholesale_hammer_price']:,.0f}</div>
+                            <div class="metric-delta">Modal Kulak Ketok Palu</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with m3:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-title">3. RETAIL FMV (MEDIAN)</div>
+                            <div class="metric-value" style="color: #10b981; font-size: 1.25rem;">Rp {corridor['retail_fmv_median']:,.0f}</div>
+                            <div class="metric-delta">Harga Jual Pasar Konsumen</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with m4:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-title">4. GROSS SPREAD</div>
+                            <div class="metric-value" style="color: #f59e0b; font-size: 1.25rem;">Rp {corridor['gross_spread']:,.0f}</div>
+                            <div class="metric-delta">Spread: {corridor['gross_spread_pct']}%</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with m5:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-title">5. EST. NET PROFIT</div>
+                            <div class="metric-value" style="color: #38bdf8; font-size: 1.25rem;">Rp {corridor['est_net_profit']:,.0f}</div>
+                            <div class="metric-delta">Net Margin: {corridor['net_margin_pct']}%</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # Visual Waterfall / Bar Comparison Chart
+                    chart_col1, chart_col2 = st.columns([3, 2])
+                    with chart_col1:
+                        st.markdown("#### Koridor Pergerakan Nilai Unit (Wholesale to Retail)")
+                        df_corridor_bars = pd.DataFrame({
+                            "Level Rantai Nilai": [
+                                "1. Harga Dasar Lelang (Floor)",
+                                "2. Ketok Palu (Modal Wholesale)",
+                                "3. Modal + Admin & Rekondisi",
+                                "4. Fair Market Value (Retail FMV)"
+                            ],
+                            "Nominal (Rp)": [
+                                corridor["base_limit_floor"],
+                                corridor["wholesale_hammer_price"],
+                                corridor["wholesale_hammer_price"] + corridor["admin_fee"] + corridor["recondition_cost"],
+                                corridor["retail_fmv_median"]
+                            ],
+                            "Color": ["#64748b", "#3b82f6", "#f59e0b", "#10b981"]
+                        })
+
+                        fig_corridor = px.bar(
+                            df_corridor_bars,
+                            x="Level Rantai Nilai",
+                            y="Nominal (Rp)",
+                            color="Level Rantai Nilai",
+                            color_discrete_sequence=["#64748b", "#3b82f6", "#f59e0b", "#10b981"],
+                            text="Nominal (Rp)"
+                        )
+                        fig_corridor.update_traces(texttemplate='Rp %{text:,.0f}', textposition='outside')
+                        fig_corridor = format_dark_chart(fig_corridor, show_legend=False, y_title="Nominal (IDR)", is_price_axis=True)
+                        fig_corridor.update_layout(height=380)
+                        st.plotly_chart(fig_corridor, use_container_width=True)
+
+                    with chart_col2:
+                        st.markdown("#### Panduan Strategis & Rekomendasi Aksi")
+                        st.markdown(f"""
+                        <div class="info-box-blue" style="margin-bottom: 12px;">
+                            <div class="info-box-title">Rekomendasi Penawaran untuk Konsumen (Buyer Power)</div>
+                            <div class="info-box-desc">
+                                Saat menawar motor di marketplace (OLX/FB), ketahuilah bahwa modal lelang pedagang berada di kisaran <b>Rp {corridor['wholesale_hammer_price']:,.0f}</b>.<br>
+                                <b>Batas Tawar Optimal:</b> Rp {corridor['retail_p25_bargain']:,.0f} – Rp {corridor['retail_fmv_median']:,.0f}.
+                            </div>
+                        </div>
+
+                        <div class="info-box-green" style="margin-bottom: 12px;">
+                            <div class="info-box-title">Rekomendasi Bidding untuk Showroom (Dealer Intelligence)</div>
+                            <div class="info-box-desc">
+                                Untuk mendapatkan margin keuntungan bersih minimal 12%, batas ketok palu maksimal saat bidding lelang adalah <b>Rp {corridor['retail_fmv_median'] * 0.82:,.0f}</b>.<br>
+                                <b>Estimasi Biaya Rekondisi:</b> Rp {corridor['recondition_cost']:,.0f} | <b>Admin Balai Lelang:</b> Rp {corridor['admin_fee']:,.0f}.
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; font-size: 0.78rem; color: #94a3b8;">
+                            <b>Data Observasi:</b> Dihitung dari <b>{corridor['auction_lot_count']} unit lot lelang</b> JBA/IBID dan <b>{corridor['retail_sample_count']} listing retail</b> aktif. Clearance rate lelang: <b>{corridor['auction_clearance_rate']}%</b>.
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("Data observasi belum cukup untuk kalkulasi koridor varian ini.")
+        finally:
+            db.close()
+
+    # --------------------------------------------------------------------------
+    # TAB 2: DEALER GROSS SPREAD & PROFITABILITY RADAR
+    # --------------------------------------------------------------------------
+    with tab_radar:
+        st.markdown("### Dealer Gross Spread & Profitability Radar")
+        st.caption("Peringkat model dan varian motor dengan selisih harga (spread) paling lebar antara balai lelang dan harga pasar retail. Ideal untuk strategi inventaris showroom motor bekas.")
+
+        db = get_db_session()
+        try:
+            engine = PricingAnalyticsEngine(db)
+            top_margins = engine.find_top_auction_dealer_margins(limit=80)
+
+            if top_margins:
+                df_margins = pd.DataFrame(top_margins)
+
+                f_col1, f_col2 = st.columns(2)
+                with f_col1:
+                    filter_brands = ["Semua Merk"] + sorted(df_margins["brand_name"].unique().tolist())
+                    sel_b_filter = st.selectbox("Filter Merk", filter_brands, key="radar_bf")
+                with f_col2:
+                    min_spread_slider = st.slider("Minimum Gross Spread %", 5.0, 35.0, 12.0, 1.0, key="radar_sp_sl")
+
+                df_filtered_margins = df_margins.copy()
+                if sel_b_filter != "Semua Merk":
+                    df_filtered_margins = df_filtered_margins[df_filtered_margins["brand_name"] == sel_b_filter]
+                df_filtered_margins = df_filtered_margins[df_filtered_margins["gross_spread_pct"] >= min_spread_slider]
+
+                # Top 10 Bar Chart
+                st.markdown("#### Top 10 Peluang Cuan Spread Terbesar (Wholesale to Retail)")
+                top_10 = df_filtered_margins.head(10).copy()
+                top_10["Motor_Label"] = top_10["brand_name"] + " " + top_10["model_name"] + " (" + top_10["year"].astype(str) + ")"
+
+                fig_radar = px.bar(
+                    top_10,
+                    x="Motor_Label",
+                    y="gross_spread_pct",
+                    color="gross_spread_pct",
+                    color_continuous_scale="Viridis",
+                    text="gross_spread_pct"
+                )
+                fig_radar.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+                fig_radar = format_dark_chart(fig_radar, show_legend=False, y_title="Gross Spread Margin (%)")
+                fig_radar.update_layout(height=380)
+                st.plotly_chart(fig_radar, use_container_width=True)
+
+                st.markdown("#### Tabel Analisis Spread & Profitabilitas Showroom")
+                st.dataframe(
+                    df_filtered_margins[[
+                        "brand_name", "model_name", "variant_name", "year",
+                        "wholesale_base", "wholesale_hammer", "retail_fmv",
+                        "gross_spread", "gross_spread_pct", "est_net_profit", "lot_count"
+                    ]].rename(columns={
+                        "brand_name": "Merk",
+                        "model_name": "Model",
+                        "variant_name": "Varian",
+                        "year": "Tahun",
+                        "wholesale_base": "Floor Lelang (Limit)",
+                        "wholesale_hammer": "Modal Ketok Palu",
+                        "retail_fmv": "Retail FMV Konsumen",
+                        "gross_spread": "Gross Spread (Rp)",
+                        "gross_spread_pct": "Spread Margin %",
+                        "est_net_profit": "Estimasi Net Profit",
+                        "lot_count": "Sample Lot"
+                    }),
+                    column_config={
+                        "Floor Lelang (Limit)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                        "Modal Ketok Palu": st.column_config.NumberColumn(format="Rp %,.0f"),
+                        "Retail FMV Konsumen": st.column_config.NumberColumn(format="Rp %,.0f"),
+                        "Gross Spread (Rp)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                        "Spread Margin %": st.column_config.NumberColumn(format="%.1f%%"),
+                        "Estimasi Net Profit": st.column_config.NumberColumn(format="Rp %,.0f")
+                    },
+                    hide_index=True,
+                    use_container_width=True
+                )
+        finally:
+            db.close()
+
+    # --------------------------------------------------------------------------
+    # TAB 3: AUCTION LOT EXPLORER & INSPECTION GRADES
+    # --------------------------------------------------------------------------
+    with tab_lots:
+        st.markdown("### Auction Lot Explorer & Technical Inspections")
+        st.caption("Pencarian dan filter granular 5.800+ unit lot motor lelang JBA Indonesia dan IBID Astra dengan hasil grade inspeksi mesin dan bodi/rangka.")
+
+        df_lots = load_all_auction_lots_df()
+
+        if not df_lots.empty:
+            c1, c2, c3, c4, c5 = st.columns(5)
+            with c1:
+                plat_opts = ["Semua Balai"] + sorted(df_lots["Platform"].unique().tolist())
+                sel_plat = st.selectbox("Balai Lelang", plat_opts, key="lot_plat")
+            with c2:
+                grade_opts = ["Semua Grade", "A (Sangat Halus/Mulus)", "B (Wajar Normal)", "C (Perlu Servis)", "D (Turun Mesin)"]
+                sel_grade = st.selectbox("Grade Mesin", grade_opts, key="lot_grd")
+            with c3:
+                status_opts = ["Semua Status"] + sorted(df_lots["Status"].unique().tolist())
+                sel_stat = st.selectbox("Status Lelang", status_opts, key="lot_st")
+            with c4:
+                cities = ["Semua Kota/Pool"] + sorted(df_lots["Pool_City"].unique().tolist())
+                sel_city = st.selectbox("Pool Wilayah", cities, key="lot_ct")
+            with c5:
+                bpkb_opts = ["Semua Status BPKB"] + sorted(df_lots["BPKB"].unique().tolist())
+                sel_bpkb = st.selectbox("Status BPKB", bpkb_opts, key="lot_bpkb")
+
+            search_lot_txt = st.text_input("Cari Nomor Lot, Model, Varian, atau Plat Polisi:", "", key="lot_txt")
+
+            filtered_lots = df_lots.copy()
+            if sel_plat != "Semua Balai":
+                filtered_lots = filtered_lots[filtered_lots["Platform"] == sel_plat]
+            if sel_grade != "Semua Grade":
+                grade_code = sel_grade[0]
+                filtered_lots = filtered_lots[filtered_lots["Grade_Engine"] == grade_code]
+            if sel_stat != "Semua Status":
+                filtered_lots = filtered_lots[filtered_lots["Status"] == sel_stat]
+            if sel_city != "Semua Kota/Pool":
+                filtered_lots = filtered_lots[filtered_lots["Pool_City"] == sel_city]
+            if sel_bpkb != "Semua Status BPKB":
+                filtered_lots = filtered_lots[filtered_lots["BPKB"] == sel_bpkb]
+            if search_lot_txt:
+                q = search_lot_txt.lower()
+                filtered_lots = filtered_lots[
+                    filtered_lots["Lot_No"].str.lower().str.contains(q, na=False) |
+                    filtered_lots["Brand"].str.lower().str.contains(q, na=False) |
+                    filtered_lots["Model"].str.lower().str.contains(q, na=False) |
+                    filtered_lots["Variant"].str.lower().str.contains(q, na=False) |
+                    filtered_lots["License_Plate"].str.lower().str.contains(q, na=False)
+                ]
+
+            # Summary Metric Row
+            st.markdown("<br>", unsafe_allow_html=True)
+            k1, k2, k3, k4 = st.columns(4)
+            with k1:
+                st.metric("Total Unit Lot Terfilter", f"{len(filtered_lots):,} Lot")
+            with k2:
+                avg_base = filtered_lots["Base_Limit_Price"].mean() if not filtered_lots.empty else 0
+                st.metric("Rata-rata Floor Limit", f"Rp {avg_base:,.0f}")
+            with k3:
+                sold_lots = filtered_lots[filtered_lots["Status"] == "Sold"]
+                avg_hammer = sold_lots["Hammer_Price"].mean() if not sold_lots.empty else 0
+                st.metric("Rata-rata Ketok Palu (Sold)", f"Rp {avg_hammer:,.0f}")
+            with k4:
+                clearance = (len(sold_lots) / len(filtered_lots) * 100.0) if not filtered_lots.empty else 0
+                st.metric("Clearance Ratio Terjual", f"{clearance:.1f}%")
+
+            st.markdown("#### Katalog Detail Lot Hasil Inspeksi Lelang")
+            st.dataframe(
+                filtered_lots[[
+                    "Lot_No", "Platform", "Brand", "Model", "Variant", "Year",
+                    "Grade_Engine", "Grade_Body", "Mileage_KM", "Tax_Status", "BPKB",
+                    "Base_Limit_Price", "Hammer_Price", "Status", "Pool_City", "Inspection_Notes"
+                ]],
+                column_config={
+                    "Base_Limit_Price": st.column_config.NumberColumn("Harga Limit Dasar", format="Rp %,.0f"),
+                    "Hammer_Price": st.column_config.NumberColumn("Harga Ketok Palu", format="Rp %,.0f"),
+                    "Mileage_KM": st.column_config.NumberColumn("Odometer", format="%d KM")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+
+            # Export CSV
+            csv_lots = filtered_lots.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="Unduh Dataset Lot Lelang (CSV)",
+                data=csv_lots,
+                file_name="dataset_lelang_jba_ibid_indonesia.csv",
+                mime="text/csv"
+            )
+        else:
+            st.warning("Belum ada data lot lelang yang dimuat.")
+
+
+# ==============================================================================
+# 6. RAW SCRAPED DATASET EXPLORER
 # ==============================================================================
 elif menu == "Raw Scraped Dataset Explorer":
     st.markdown("""
