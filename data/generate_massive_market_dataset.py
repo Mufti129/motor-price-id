@@ -171,13 +171,18 @@ def generate_massive_dataset(target_per_brand: int = 1000):
                 post_date = datetime.now() - timedelta(days=random.randint(0, 45), hours=random.randint(1, 23))
 
                 import urllib.parse
-                clean_search_query = f"{brand.name} {model.name} {year}".strip()
+                import re
+
+                clean_brand = brand.name.replace("(Piaggio)", "").strip()
+                clean_model = re.sub(r"[\(\)\&]", " ", model.name)
+                clean_model = clean_model.replace("Series", "").strip()
+                clean_search_query = " ".join(f"{clean_brand} {clean_model} {year}".split())
                 encoded_q = urllib.parse.quote_plus(clean_search_query)
                 olx_slug = clean_search_query.lower().replace(" ", "-")
 
                 platform = random.choice(["olx", "olx", "momotor", "facebook"])
                 if platform == "facebook":
-                    listing_url = f"https://www.facebook.com/marketplace/category/vehicles?query={encoded_q}"
+                    listing_url = f"https://www.facebook.com/marketplace/search/?query={encoded_q}"
                 elif platform == "momotor":
                     listing_url = f"https://www.momotor.id/motor-bekas?keyword={encoded_q}"
                 else:
