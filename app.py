@@ -647,7 +647,7 @@ elif menu == "Fair Market Value (FMV) Calculator":
                     </div>
                     <div class="val-price-hero">Rp {final_fmv:,.0f}</div>
                     <div style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 18px;">
-                        Vehicle: <strong>{selected_brand} {selected_model} - {selected_variant_name} ({selected_year})</strong> | Market Depth: <strong>{sample_count} Scraped Samples</strong>
+                        Vehicle: <strong>{selected_brand} {selected_model} - {selected_variant_name} ({selected_year})</strong> | Samples: <strong>{sample_count} Units</strong> | Depresiasi Riil dari OTR: <span style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 2px 8px; border-radius: 4px; font-weight: 700;">{real_depreciation:.1f}%</span>
                     </div>
                     <div class="kpi-grid" style="margin-bottom: 0;">
                         <div class="pro-metric-card emerald">
@@ -714,6 +714,10 @@ elif menu == "Market Price Monitoring & Quartiles":
         else:
             table_rows = []
             for s, var, model, brand in stats_query:
+                msrp = float(var.official_msrp_new) if var.official_msrp_new else None
+                median_p = float(s.price_median)
+                depreciation_pct = ((msrp - median_p) / msrp * 100.0) if (msrp and msrp > 0) else None
+
                 table_rows.append({
                     "Brand": brand.name,
                     "Model": model.name,
@@ -723,10 +727,11 @@ elif menu == "Market Price Monitoring & Quartiles":
                     "Samples": s.sample_count,
                     "Min_Price": float(s.price_min),
                     "P25_Bargain": float(s.price_p25),
-                    "Median_FMV": float(s.price_median),
+                    "Median_FMV": median_p,
                     "P75_Premium": float(s.price_p75),
                     "Max_Price": float(s.price_max),
-                    "Official_MSRP": float(var.official_msrp_new) if var.official_msrp_new else None
+                    "Official_MSRP": msrp,
+                    "Depreciation_Pct": depreciation_pct
                 })
             df_stats = pd.DataFrame(table_rows)
 
@@ -757,6 +762,7 @@ elif menu == "Market Price Monitoring & Quartiles":
                     "P75_Premium": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Max_Price": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Official_MSRP": st.column_config.NumberColumn(format="Rp %,.0f"),
+                    "Depreciation_Pct": st.column_config.NumberColumn(label="Depresiasi Riil (%)", format="%.1f%%"),
                     "Samples": st.column_config.NumberColumn(format="%d units")
                 },
                 hide_index=True
