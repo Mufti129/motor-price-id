@@ -437,7 +437,8 @@ with st.sidebar:
             "Bargain & Arbitrage Opportunities",
             "Raw Scraped Dataset Explorer",
             "Live Scraper & Crawler Center",
-            "Official Master Catalog (12 Years)"
+            "Official Master Catalog (12 Years)",
+            "System Documentation & Methodology"
         ],
         index=0
     )
@@ -640,6 +641,13 @@ elif menu == "Fair Market Value (FMV) Calculator":
                 bargain_p25 = final_fmv * 0.92
                 premium_p75 = final_fmv * 1.08
 
+                msrp_val = float(selected_var.official_msrp_new) if (selected_var and selected_var.official_msrp_new) else None
+                if msrp_val and msrp_val > 0:
+                    real_depreciation = ((msrp_val - final_fmv) / msrp_val * 100.0)
+                    deprec_badge = f"{real_depreciation:.1f}%"
+                else:
+                    deprec_badge = "N/A"
+
                 st.markdown(f"""
                 <div class="val-hero-container">
                     <div style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em;">
@@ -647,7 +655,7 @@ elif menu == "Fair Market Value (FMV) Calculator":
                     </div>
                     <div class="val-price-hero">Rp {final_fmv:,.0f}</div>
                     <div style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 18px;">
-                        Vehicle: <strong>{selected_brand} {selected_model} - {selected_variant_name} ({selected_year})</strong> | Samples: <strong>{sample_count} Units</strong> | Depresiasi Riil dari OTR: <span style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 2px 8px; border-radius: 4px; font-weight: 700;">{real_depreciation:.1f}%</span>
+                        Vehicle: <strong>{selected_brand} {selected_model} - {selected_variant_name} ({selected_year})</strong> | Samples: <strong>{sample_count} Units</strong> | Depresiasi Riil dari OTR: <span style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 2px 8px; border-radius: 4px; font-weight: 700;">{deprec_badge}</span>
                     </div>
                     <div class="kpi-grid" style="margin-bottom: 0;">
                         <div class="pro-metric-card emerald">
@@ -1134,3 +1142,150 @@ elif menu == "Official Master Catalog (12 Years)":
         )
     finally:
         db.close()
+
+# ==============================================================================
+# 8. SYSTEM DOCUMENTATION & METHODOLOGY
+# ==============================================================================
+elif menu == "System Documentation & Methodology":
+    st.markdown("""
+    <div class="hero-appbar">
+        <div class="hero-title">System Documentation & Technical Methodology</div>
+        <div class="hero-subtitle">Comprehensive engineering specification, econometric valuation theories, mathematical formulas, data dictionary, and operational guides.</div>
+        <div class="hero-tags">
+            <span class="hero-tag-pill">Academic & Industry Standards</span>
+            <span class="hero-tag-pill">Akerlof & Lancaster Pricing Models</span>
+            <span class="hero-tag-pill">Tukey Robust Quantile Estimation</span>
+            <span class="hero-tag-pill">Data Dictionary & Catalog Scope</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    tab_arch, tab_math, tab_dict, tab_cat, tab_guide = st.tabs([
+        "1. Architecture & Background",
+        "2. Econometric & Valuation Models",
+        "3. Data Dictionary & Parameters",
+        "4. Master Catalog Taxonomy",
+        "5. Operations & Deployment Guide"
+    ])
+
+    with tab_arch:
+        st.markdown('<div class="content-panel"><div class="panel-header">System Background & End-to-End Architecture</div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div class="info-box-blue">
+            <div class="info-box-title">Latar Belakang & Urgensi Sistem</div>
+            <div class="info-box-desc">
+                Pasar sepeda motor bekas di Indonesia merupakan ekosistem bernilai tinggi yang memiliki tantangan asimetri informasi, banyaknya iklan perangkap DP/Kredit murah di marketplace, serta tingginya variasi istilah slang lokal (*pajak off 2x, kaleng 2028, BPKB only*). MotorPrice ID dibangun sebagai platform terpadu untuk memberikan transparansi nilai pasar wajar (*Fair Market Value*) secara real-time dan ilmiah.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        **Alur Kerja Sistem (5 Tahap Utama):**
+        1. **Data Harvesting & Multi-Source Scraping:** Mengambil data listing mentah secara otomatis dari OLX Indonesia, Facebook Marketplace, dan Momotor.
+        2. **AI & NLP Data Cleansing Pipeline:** Membersihkan teks, mengekstraksi jarak tempuh KM dan status pajak, mendeteksi flag DP/Kredit semu, dan melakukan *Entity Resolution* fuzzy matching.
+        3. **Relational Database Layer (SQLite ORM):** Menyimpan master katalog 12 tahun (2014–2026), listing tervalidasi (6.000 data), dan snapshot agregasi harian.
+        4. **Econometric & Pricing Analytics Engine:** Menghitung Fair Market Value (FMV), kuartil harga (Min, P25, Median, P75, Max), dan peluang diskon arbitrase.
+        5. **Enterprise Streamlit User Interface:** Menyajikan visualisasi interaktif dengan tema balanced slate/navy bebas overflow.
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_math:
+        st.markdown('<div class="content-panel"><div class="panel-header">Mathematical Formulations & Academic Theories</div>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-box-purple">
+            <div class="info-box-title">1. Model Depresiasi Saldo Menurun (Double-Declining Balance & Lemons Market Theory)</div>
+            <div class="info-box-desc">
+                <strong>Rujukan Ahli:</strong> <em>George Akerlof (1970 - Nobel Ekonomi 2001)</em> & <em>Wyatt, D. J. (1990)</em>.<br>
+                Akerlof membuktikan bahwa kendaraan mengalami diskon penyusutan terbesar seketika setelah unit keluar dari showroom dealer akibat asimetri informasi kualitas.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.latex(r"\text{Depresiasi Riil (\%)} = \left( \frac{\text{Official MSRP} - \text{Median FMV}}{\text{Official MSRP}} \right) \times 100\%")
+        st.latex(r"D(t) = \min\left(0.68, \; \delta_1 + (t \times \delta_a)\right)")
+        st.caption("di mana delta_1 = 15% - 18% (depresiasi tahun pertama), delta_a = 5.5% (laju tahunan normal), t = usia kendaraan.")
+
+        st.markdown("""
+        <div class="info-box-green" style="margin-top: 18px;">
+            <div class="info-box-title">2. Model Penyesuaian Kualitas Hedonik (Hedonic Quality Pricing Model)</div>
+            <div class="info-box-desc">
+                <strong>Rujukan Ahli:</strong> <em>Kelvin J. Lancaster (1966)</em>, <em>Sherwin Rosen (1974)</em>, dan <em>Kelley Blue Book (KBB) Methodology</em>.<br>
+                Nilai motor bekas merupakan fungsi dari atribut fisik, kelengkapan surat, dan pemakaian kilometer.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.latex(r"FMV_{Adjusted} = Base Price + Delta_{Pajak} + Delta_{KM} + Delta_{BPKB}")
+        st.markdown(r"""
+        - **Koreksi Pajak:** Pajak Mati 1 Thn ($-\text{Rp } 650.000$), Pajak Mati 2+ Thn ($-\text{Rp } 1.400.000$).
+        - **Koreksi Jarak Tempuh (Standar AISI $8.500 \text{ KM/thn}$):** Penalti $-\text{Rp } 250.000$ per kelebihan $5.000 \text{ KM}$.
+        - **Koreksi Legalitas BPKB:** Non-BPKB (STNK Only) dikenakan penalti pemotongan **-35%** dari harga pasar.
+        """)
+
+        st.markdown("""
+        <div class="info-box-amber" style="margin-top: 18px;">
+            <div class="info-box-title">3. Estimasi Kuartil Kokoh & Isolasi Outlier (Robust Statistics)</div>
+            <div class="info-box-desc">
+                <strong>Rujukan Ahli:</strong> <em>John W. Tukey (1977 - Exploratory Data Analysis)</em>.<br>
+                Menghindari distorsi rata-rata (mean) akibat harga DP palsu, dengan menerapkan estimasi Kuartil:
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("""
+        - **P25 (Kuartil 1 - Bargain Buy):** Rekomendasi batas harga beli murah bagi dealer untuk mendapatkan keuntungan.
+        - **Median (Kuartil 2 - Fair Market Value):** Nilai ekuilibrium tengah pasar.
+        - **P75 (Kuartil 3 - Pristine/Collector):** Harga untuk motor berkondisi istimewa / KM rendah.
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_dict:
+        st.markdown('<div class="content-panel"><div class="panel-header">Data Dictionary & Schema Parameters</div>', unsafe_allow_html=True)
+        dict_data = [
+            {"Parameter": "ID", "Tipe": "Integer", "Definisi": "Identifikator unik data listing."},
+            {"Parameter": "Platform", "Tipe": "String", "Definisi": "Marketplace sumber data (OLX, FACEBOOK, MOMOTOR)."},
+            {"Parameter": "Title", "Tipe": "String", "Definisi": "Judul asli iklan setelah dinormalisasi NLP."},
+            {"Parameter": "Brand", "Tipe": "String", "Definisi": "Merk pabrikan motor resmi (Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki)."},
+            {"Parameter": "Model", "Tipe": "String", "Definisi": "Lini model sepeda motor (73 Model terdaftar)."},
+            {"Parameter": "Variant", "Tipe": "String", "Definisi": "Varian spesifik dan generasi motor (212 Varian master)."},
+            {"Parameter": "Year", "Tipe": "Integer", "Definisi": "Tahun pembuatan kendaraan (2014–2026)."},
+            {"Parameter": "Price", "Tipe": "Numeric", "Definisi": "Harga riil transaksi tunai (IDR)."},
+            {"Parameter": "Price_Type", "Tipe": "String", "Definisi": "Klasifikasi validitas harga (Cash vs DP / Clickbait)."},
+            {"Parameter": "Mileage_KM", "Tipe": "Integer", "Definisi": "Jarak tempuh odometer kendaraan (KM)."},
+            {"Parameter": "Tax_Status", "Tipe": "String", "Definisi": "Status legalitas pajak (Hidup / Panjang, Mati / Off, Unknown)."},
+            {"Parameter": "BPKB", "Tipe": "String", "Definisi": "Kelengkapan dokumen BPKB (Lengkap vs Tidak Ada)."},
+            {"Parameter": "City & Province", "Tipe": "String", "Definisi": "Lokasi administratif unit kendaraan."},
+            {"Parameter": "MSRP_New", "Tipe": "Numeric", "Definisi": "Harga resmi On The Road (OTR) baru saat rilis peluncuran."},
+            {"Parameter": "Depresiasi Riil (%)", "Tipe": "Numeric", "Definisi": "Persentase penyusutan harga pasar terhadap MSRP OTR baru."},
+            {"Parameter": "URL", "Tipe": "Text", "Definisi": "Tautan deep-search resmi aktif menuju marketplace terkait."}
+        ]
+        st.dataframe(pd.DataFrame(dict_data), use_container_width=True, hide_index=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_cat:
+        st.markdown('<div class="content-panel"><div class="panel-header">Master Catalog Scope (12 Years: 2014–2026)</div>', unsafe_allow_html=True)
+        cat_summary = [
+            {"Merk": "Honda", "Model": 21, "Varian": 76, "Rentang CC": "110cc - 250cc", "Contoh Model Unggulan": "Beat, Vario, Scoopy, Stylo 160, PCX, ADV, CB150R, CB150X, CBR250RR, Forza"},
+            {"Merk": "Yamaha", "Model": 20, "Varian": 48, "Rentang CC": "115cc - 530cc", "Contoh Model Unggulan": "Mio, Fazzio, Grand Filano, NMAX, Aerox, XMAX, Lexi LX, MT-15, R15, R25, TMAX DX"},
+            {"Merk": "Kawasaki", "Model": 11, "Varian": 34, "Rentang CC": "125cc - 400cc", "Contoh Model Unggulan": "Ninja 250, Ninja ZX-25R, Ninja ZX-4RR, KLX 150/230, D-Tracker, W175, Versys 250"},
+            {"Merk": "Vespa (Piaggio)", "Model": 6, "Varian": 21, "Rentang CC": "125cc - 300cc", "Contoh Model Unggulan": "Sprint, Primavera, GTS Super 150/300, LX 125, S 125, GTV 300 HPE"},
+            {"Merk": "Piaggio", "Model": 5, "Varian": 10, "Rentang CC": "125cc - 530cc", "Contoh Model Unggulan": "Medley S 150, Liberty 150 S, Beverly 300, MP3 300 HPE, MP3 530 Exclusive"},
+            {"Merk": "Suzuki", "Model": 10, "Varian": 23, "Rentang CC": "110cc - 250cc", "Contoh Model Unggulan": "Satria F150, GSX-R150, Address, Nex Crossover, V-Strom 250SX, Burgman 125EX"}
+        ]
+        st.dataframe(pd.DataFrame(cat_summary), use_container_width=True, hide_index=True)
+        st.caption("Total Cakupan Master Katalog: 6 Produsen Terkemuka, 73 Model Kendaraan, dan 212 Varian Resmi.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with tab_guide:
+        st.markdown('<div class="content-panel"><div class="panel-header">User Operations & Deployment Architecture</div>', unsafe_allow_html=True)
+        st.markdown("""
+        **Lokasi Mengecek Depresiasi Riil:**
+        1. **Menu `Market Price Monitoring & Quartiles`:** Periksa kolom **`Depresiasi Riil (%)`** pada tabel kuartil.
+        2. **Menu `Fair Market Value (FMV) Calculator`:** Periksa badge pill **`Depresiasi Riil dari OTR: XX.X%`** di kotak hasil estimasi.
+        3. **Menu `Market Overview`:** Periksa grafik garis **`12-Year Historical Price Depreciation Curve`**.
+
+        **Panduan Deployment ke Streamlit Cloud:**
+        - **Repository:** `https://github.com/Mufti129/motor-price-id.git`
+        - **Branch:** `main`
+        - **Main file path:** `app.py` atau `streamlit_app.py`
+        - Seluruh pembaruan di branch `main` otomatis tersinkronisasi secara instan.
+        """)
+        st.markdown('</div>', unsafe_allow_html=True)
