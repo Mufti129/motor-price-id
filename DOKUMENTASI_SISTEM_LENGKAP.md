@@ -202,6 +202,23 @@ Sistem MotorPrice ID dibangun berdasarkan metodologi ilmiah dan literatur ekonom
 
 ---
 
+### 4.6 Algoritma Fallback & Penanganan Varian Nol Sampel (*Zero-Sample Theoretical Modeling*)
+* **Prinsip Dasar:**
+  Pada varian langka, unit koleksi edisi terbatas, moge berlikuiditas rendah, atau motor listrik anyar (model 2026) di mana sampel listing aktif di marketplace sekunder bernilai nol atau di bawah batas minimum statistik ($N < 2$), sistem tetap menghasilkan rekomendasi valuasi yang akurat tanpa mengalami kegagalan (*crash*).
+* **Formula Deterministik:**
+  Sistem secara otomatis mengaktifkan *MSRP Benchmark & Age-Decay Retention Modeling*:
+  $$BasePrice_{Theoretical} = MSRP_{New} \times \left(1 - \min\left(0.68, \; \delta_1 + (t \times \delta_a)\right)\right)$$
+  $$FMV_{Final} = \max\left(\text{Rp } 3.500.000, \; BasePrice_{Theoretical} + \Delta_{\text{Pajak}} + \Delta_{\text{KM}} + \Delta_{\text{Legalitas}}\right)$$
+  - $MSRP_{New}$ : Harga baru resmi OTR peluncuran dari Master Katalog.
+  - $\delta_1 = 18\%$ : Depresiasi tahun pertama (*showroom exit discount*).
+  - $\delta_a = 5.5\%$ : Laju depresiasi tahunan.
+  - $t = \max(0, 2026 - \text{Tahun Pembuatan})$.
+  - $\Delta_{\text{Pajak}}, \Delta_{\text{KM}}, \Delta_{\text{Legalitas}}$ : Faktor penyesuaian kualitas hedonik input pengguna.
+* **Transparansi UI:**
+  Sistem secara transparan menandai status data dengan label `Samples: 0 Units` agar analis mengetahui bahwa nilai pasar dihitung secara parametrik teoretis.
+
+---
+
 # BAB V: Taksonomi Master Katalog 12 Tahun (2014–2026)
 
 Master katalog mencakup 17 produsen sepeda motor di Indonesia yang dikelompokkan ke dalam 4 Kategori Sektor Utama:

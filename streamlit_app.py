@@ -1797,6 +1797,25 @@ elif menu == "System Documentation & Methodology":
         - **Median (Kuartil 2 - Fair Market Value):** Nilai ekuilibrium tengah pasar.
         - **P75 (Kuartil 3 - Pristine/Collector):** Harga untuk motor berkondisi istimewa / KM rendah.
         """)
+
+        st.markdown("""
+        <div class="info-box-blue" style="margin-top: 18px;">
+            <div class="info-box-title">4. Algoritma Fallback & Penanganan Varian Nol Sampel (Zero-Sample MSRP Theoretical Modeling)</div>
+            <div class="info-box-desc">
+                <strong>Prinsip Penanganan Ketiadaan Data Empiris:</strong><br>
+                Pada varian langka, unit koleksi, moge berlikuiditas rendah, atau motor listrik rilisan baru di mana jumlah sampel listing aktif di marketplace sekunder bernilai nol atau di bawah batas statistik (<em>N &lt; 2</em>), sistem tidak mengalami kegagalan (<em>crash</em>). Sebagai gantinya, sistem secara deterministik mengaktifkan model penentuan harga berbasis <strong>MSRP Benchmark &amp; Age-Decay Retention Modeling</strong>.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.latex(r"BasePrice_{Theoretical} = MSRP_{New} \times \left(1 - \min\left(0.68, \; \delta_1 + \left(t \times \delta_a\right)\right)\right)")
+        st.latex(r"FMV_{Final} = \max\left(\text{Rp } 3.500.000, \; BasePrice_{Theoretical} + \Delta_{Pajak} + \Delta_{KM} + \Delta_{BPKB}\right)")
+        st.markdown(r"""
+        **Alur Kerja Penanganan Nol Sampel:**
+        1. **Ekstraksi MSRP Resmi:** Mengambil harga peluncuran baru resmi (*Official MSRP New*) dari basis data Master Katalog 12 Tahun.
+        2. **Perhitungan Penyusutan Umur ($t$):** Mengaplikasikan depresiasi tahun pertama ($\delta_1 = 18\%$) dan laju depresiasi tahunan ($\delta_a = 5.5\%$) dengan batas retensi residual minimum ($32\%$).
+        3. **Penyesuaian Atribut Hedonik:** Tetap mengalkulasi penalti keterlambatan pajak STNK, deviasi kilometer pemakaian terhadap benchmark tahunan, dan kelengkapan dokumen BPKB.
+        4. **Audit & Transparansi UI:** Sistem menyajikan label `Samples: 0 Units` secara transparan pada ringkasan valuasi sehingga pengguna memahami bahwa hasil perhitungan berbasis model teoretis katalog resmi.
+        """)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with tab_dict:
