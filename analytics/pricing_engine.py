@@ -212,12 +212,22 @@ class PricingAnalyticsEngine:
         """
         # 1. Ambil Retail Stats
         retail_stats = self.calculate_variant_pricing_stats(variant_id, year)
-        if not retail_stats:
-            return None
-
-        retail_fmv = retail_stats["price_median"]
-        retail_p25 = retail_stats["price_p25"]
-        retail_p75 = retail_stats["price_p75"]
+        if retail_stats:
+            retail_fmv = retail_stats["price_median"]
+            retail_p25 = retail_stats["price_p25"]
+            retail_p75 = retail_stats["price_p75"]
+            sample_cnt = retail_stats["sample_count"]
+        else:
+            var_obj = self.db.query(MasterVariant).filter(MasterVariant.id == variant_id).first()
+            if not var_obj:
+                return None
+            msrp = float(var_obj.official_msrp_new or 20_000_000.0)
+            age = max(0, 2026 - (year or 2024))
+            deprec = min(0.68, 0.18 + (age * 0.055))
+            retail_fmv = max(3_500_000.0, msrp * (1.0 - deprec))
+            retail_p25 = retail_fmv * 0.92
+            retail_p75 = retail_fmv * 1.08
+            sample_cnt = 0
 
         # 2. Ambil Wholesale Auction Stats
         auction_query = self.db.query(
@@ -258,7 +268,7 @@ class PricingAnalyticsEngine:
             "retail_fmv_median": retail_fmv,
             "retail_p25_bargain": retail_p25,
             "retail_p75_premium": retail_p75,
-            "retail_sample_count": retail_stats["sample_count"],
+            "retail_sample_count": sample_cnt,
             "base_limit_floor": base_floor,
             "wholesale_hammer_price": wholesale_hammer,
             "auction_lot_count": lot_count,
