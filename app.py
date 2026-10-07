@@ -202,20 +202,33 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-DARK_PLOTLY_LAYOUT = dict(
-    paper_bgcolor="rgba(17, 24, 39, 0.6)",
-    plot_bgcolor="rgba(17, 24, 39, 0.6)",
-    font=dict(family="Plus Jakarta Sans", color="#94a3b8", size=12),
-    margin=dict(t=30, b=30, l=30, r=30),
-    xaxis=dict(
-        gridcolor="rgba(255, 255, 255, 0.06)",
-        zerolinecolor="rgba(255, 255, 255, 0.08)"
-    ),
-    yaxis=dict(
-        gridcolor="rgba(255, 255, 255, 0.06)",
-        zerolinecolor="rgba(255, 255, 255, 0.08)"
+def format_dark_chart(fig, show_legend=False, y_title=None, x_title=None, is_price_axis=False):
+    fig.update_layout(
+        paper_bgcolor="rgba(17, 24, 39, 0.6)",
+        plot_bgcolor="rgba(17, 24, 39, 0.6)",
+        font=dict(family="Plus Jakarta Sans", color="#94a3b8", size=12),
+        margin=dict(t=30, b=30, l=30, r=30),
+        showlegend=show_legend
     )
-)
+    fig.update_xaxes(
+        gridcolor="rgba(255, 255, 255, 0.06)",
+        zerolinecolor="rgba(255, 255, 255, 0.08)",
+        title=x_title if x_title else None
+    )
+    if is_price_axis:
+        fig.update_yaxes(
+            gridcolor="rgba(255, 255, 255, 0.06)",
+            zerolinecolor="rgba(255, 255, 255, 0.08)",
+            title=y_title if y_title else "Price (IDR)",
+            tickformat=",.0f"
+        )
+    else:
+        fig.update_yaxes(
+            gridcolor="rgba(255, 255, 255, 0.06)",
+            zerolinecolor="rgba(255, 255, 255, 0.08)",
+            title=y_title if y_title else None
+        )
+    return fig
 
 # Ensure DB & Seed on cold start
 @st.cache_resource
@@ -392,7 +405,7 @@ if menu == "Market Overview":
                 color_discrete_sequence=["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"],
                 text_auto=True
             )
-            fig_brand.update_layout(**DARK_PLOTLY_LAYOUT, showlegend=False)
+            fig_brand = format_dark_chart(fig_brand, show_legend=False, y_title="Total Listings")
             st.plotly_chart(fig_brand, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -406,11 +419,7 @@ if menu == "Market Overview":
                 points="outliers",
                 color_discrete_sequence=["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"]
             )
-            fig_box.update_layout(
-                **DARK_PLOTLY_LAYOUT,
-                showlegend=False,
-                yaxis=dict(title="Price (IDR)", tickformat=",.0f", gridcolor="rgba(255, 255, 255, 0.06)")
-            )
+            fig_box = format_dark_chart(fig_box, show_legend=False, y_title="Price (IDR)", is_price_axis=True)
             st.plotly_chart(fig_box, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -424,11 +433,7 @@ if menu == "Market Overview":
             markers=True,
             color_discrete_sequence=["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"]
         )
-        fig_trend.update_layout(
-            **DARK_PLOTLY_LAYOUT,
-            yaxis=dict(title="Median Price (IDR)", tickformat=",.0f", gridcolor="rgba(255, 255, 255, 0.06)"),
-            xaxis=dict(title="Manufacturing Production Year", dtick=1, gridcolor="rgba(255, 255, 255, 0.06)")
-        )
+        fig_trend = format_dark_chart(fig_trend, show_legend=True, y_title="Median Price (IDR)", x_title="Manufacturing Production Year", is_price_axis=True)
         st.plotly_chart(fig_trend, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
