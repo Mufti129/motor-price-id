@@ -457,7 +457,7 @@ with st.sidebar:
     st.markdown("""
     <div class="info-box-blue" style="padding: 12px 14px; margin-bottom: 10px;">
         <div class="info-box-title" style="font-size: 0.80rem;">Catalog Scope</div>
-        <div class="info-box-desc" style="font-size: 0.74rem;">17 Brands | 108 Models | 275 Master Variants (2014–2026)</div>
+        <div class="info-box-desc" style="font-size: 0.74rem;">17 Brands | 140 Models | 419 Master Variants (2014–2026)</div>
     </div>
     """, unsafe_allow_html=True)
     st.caption("Engine: Python 3.13 | DB: SQLite ORM | Platform: Streamlit Cloud")
@@ -949,7 +949,7 @@ elif menu == "Live Scraper & Crawler Center":
     """, unsafe_allow_html=True)
 
     tab_batch, tab_single = st.tabs([
-        "Batch Scrape Entire Master Catalog (All 108 Models & 17 Brands)",
+        "Batch Scrape Entire Master Catalog (All 140 Models & 17 Brands)",
         "Targeted Single Keyword / Model Scraping"
     ])
 
@@ -959,7 +959,7 @@ elif menu == "Live Scraper & Crawler Center":
         <div class="info-box-blue">
             <div class="info-box-title">Cakupan Scraping Skala Penuh (Full Master Catalog)</div>
             <div class="info-box-desc">
-                Mengeksekusi pengumpulan data secara menyeluruh untuk seluruh 17 merk produsen (Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki, Polytron, Alva, Gesits, Yadea, Viar, Royal Enfield, Benelli & Keeway, KTM, TVS, Harley-Davidson, dan BMW Motorrad) mencakup 108 model dan 275 varian motor dalam 12 tahun terakhir (2014–2026).
+                Mengeksekusi pengumpulan data secara menyeluruh untuk seluruh 17 merk produsen (Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki, Polytron, Alva, Gesits, Yadea, Viar, Royal Enfield, Benelli & Keeway, KTM, TVS, Harley-Davidson, dan BMW Motorrad) mencakup 140 model dan 419 varian motor dalam 12 tahun terakhir (2014–2026).
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -976,7 +976,7 @@ elif menu == "Live Scraper & Crawler Center":
                     from data.generate_massive_market_dataset import generate_massive_dataset
                     total_gen = generate_massive_dataset(target_per_brand=target_quota)
                     st.cache_data.clear()
-                    st.success(f"Batch Ingestion Sukses: {total_gen:,} listing berhasil diperbarui dan disinkronkan ke seluruh 108 model.")
+                    st.success(f"Batch Ingestion Sukses: {total_gen:,} listing berhasil diperbarui dan disinkronkan ke seluruh 140 model.")
                 except Exception as ex:
                     st.error(f"Terjadi kendala saat batch scraping: {ex}")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1077,8 +1077,8 @@ elif menu == "Official Master Catalog (12 Years)":
         <div class="hero-subtitle">Standardized master taxonomy of all motorcycle brands, engine displacement CC, generation variants, and historical official MSRPs.</div>
         <div class="hero-tags">
             <span class="hero-tag-pill">17 Brands</span>
-            <span class="hero-tag-pill">108 Models</span>
-            <span class="hero-tag-pill">275 Variants</span>
+            <span class="hero-tag-pill">140 Models</span>
+            <span class="hero-tag-pill">419 Variants</span>
             <span class="hero-tag-pill">EV & 110cc – 1745cc Coverage</span>
         </div>
     </div>
@@ -1191,7 +1191,7 @@ elif menu == "Official Master Catalog (12 Years)":
                     <li><strong>Arsip Historis Peluncuran Media Otomotif:</strong> Publikasi rilis peluncuran dari media otomotif nasional terakreditasi (Kompas Otomotif, GridOto/Oto.com, DetikOto, Motorplus) untuk unit-unit yang telah selesai masa edarnya (discontinued 2014–2023).</li>
                 </ol>
                 <div style="margin-top: 10px; font-size: 0.78rem; color: #94a3b8;">
-                    <em>Status Audit: Terverifikasi Valid per Oktober 2026 | Cakupan: 17 Merk, 108 Model, 275 Varian (Rentang Waktu: 2014–2026)</em>
+                    <em>Status Audit: Terverifikasi Valid per Oktober 2026 | Cakupan: 17 Merk, 140 Model, 419 Varian (Rentang Waktu: 2014–2026)</em>
                 </div>
             </div>
         </div>
@@ -1300,8 +1300,8 @@ elif menu == "System Documentation & Methodology":
             {"Parameter": "Platform", "Tipe": "String", "Definisi": "Marketplace sumber data (OLX, FACEBOOK, MOMOTOR)."},
             {"Parameter": "Title", "Tipe": "String", "Definisi": "Judul asli iklan setelah dinormalisasi NLP."},
             {"Parameter": "Brand", "Tipe": "String", "Definisi": "Merk pabrikan motor resmi (17 Merk: Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki, Polytron, Alva, Gesits, Yadea, Viar, Royal Enfield, Benelli & Keeway, KTM, TVS, Harley-Davidson, BMW Motorrad)."},
-            {"Parameter": "Model", "Tipe": "String", "Definisi": "Lini model sepeda motor (108 Model terdaftar)."},
-            {"Parameter": "Variant", "Tipe": "String", "Definisi": "Varian spesifik dan generasi motor (275 Varian master)."},
+            {"Parameter": "Model", "Tipe": "String", "Definisi": "Lini model sepeda motor (140 Model terdaftar)."},
+            {"Parameter": "Variant", "Tipe": "String", "Definisi": "Varian spesifik dan generasi motor (419 Varian master)."},
             {"Parameter": "Year", "Tipe": "Integer", "Definisi": "Tahun pembuatan kendaraan (2014–2026)."},
             {"Parameter": "Price", "Tipe": "Numeric", "Definisi": "Harga riil transaksi tunai (IDR)."},
             {"Parameter": "Price_Type", "Tipe": "String", "Definisi": "Klasifikasi validitas harga (Cash vs DP / Clickbait)."},
@@ -1319,26 +1319,26 @@ elif menu == "System Documentation & Methodology":
     with tab_cat:
         st.markdown('<div class="content-panel"><div class="panel-header">Master Catalog Scope (12 Years: 2014–2026)</div>', unsafe_allow_html=True)
         cat_summary = [
-            {"Kategori Sektor": "ICE Konvensional", "Merk": "Honda", "Negara": "Jepang", "Model": 21, "Varian": 76, "Rentang CC": "110cc - 250cc", "Contoh Model Unggulan": "Beat, Vario, Scoopy, Stylo 160, PCX, ADV, CB150R, CBR250RR, Forza"},
-            {"Kategori Sektor": "ICE Konvensional", "Merk": "Yamaha", "Negara": "Jepang", "Model": 20, "Varian": 48, "Rentang CC": "125cc - 250cc", "Contoh Model Unggulan": "Mio, Fazzio, Grand Filano, NMAX, Aerox, XMAX, Lexi LX, MT-15, R15, R25"},
-            {"Kategori Sektor": "ICE Konvensional", "Merk": "Kawasaki", "Negara": "Jepang", "Model": 11, "Varian": 34, "Rentang CC": "150cc - 250cc", "Contoh Model Unggulan": "Ninja 250, Ninja ZX-25R, KLX 150/230, D-Tracker 150, W175, Versys 250"},
-            {"Kategori Sektor": "ICE Konvensional", "Merk": "Vespa (Piaggio)", "Negara": "Italia", "Model": 6, "Varian": 21, "Rentang CC": "125cc - 150cc", "Contoh Model Unggulan": "Sprint, Primavera, GTS Super 150/300, LX 125, S 125, GTV 300 HPE"},
-            {"Kategori Sektor": "ICE Konvensional", "Merk": "Piaggio", "Negara": "Italia", "Model": 5, "Varian": 10, "Rentang CC": "100cc - 300cc", "Contoh Model Unggulan": "Medley S 150, Liberty 150 S, Beverly 300, MP3 300 HPE, Zip 100"},
-            {"Kategori Sektor": "ICE Konvensional", "Merk": "Suzuki", "Negara": "Jepang", "Model": 10, "Varian": 23, "Rentang CC": "113cc - 250cc", "Contoh Model Unggulan": "Satria F150, GSX-R150, Burgman Street 125EX, Address, Nex II, V-Strom 250SX"},
-            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Polytron", "Negara": "Indonesia", "Model": 3, "Varian": 5, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Fox-R (Sewa/Beli), Fox-S (Sewa/Beli), T-Rex 5000W"},
-            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Alva", "Negara": "Indonesia", "Model": 3, "Varian": 5, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Alva One, Alva One XP, Alva Cervo (1 & 2 Batt), Alva N3"},
-            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Gesits", "Negara": "Indonesia", "Model": 2, "Varian": 3, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Gesits G1, Gesits Raya G, Gesits Raya E"},
-            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Yadea", "Negara": "China", "Model": 3, "Varian": 3, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Yadea T9 (TTFAR), Yadea E8S Pro, Yadea G6"},
-            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Viar", "Negara": "Indonesia", "Model": 2, "Varian": 4, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Viar Q1 (Gen 1 & 2), Viar N1, Viar N2"},
-            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "Royal Enfield", "Negara": "Inggris / India", "Model": 5, "Varian": 10, "Rentang CC": "350cc - 650cc", "Contoh Model Unggulan": "Hunter 350, Classic 350, Meteor 350, Himalayan 411/450, Interceptor/Continental 650"},
-            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "Benelli & Keeway", "Negara": "Italia / China", "Model": 5, "Varian": 8, "Rentang CC": "125cc - 250cc", "Contoh Model Unggulan": "Motobi 200 EVO, Patagonian Eagle 250, Panarea 125, Keeway V250Fi / Benda V252C, Shiny 150"},
-            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "KTM", "Negara": "Austria", "Model": 3, "Varian": 8, "Rentang CC": "250cc - 250cc", "Contoh Model Unggulan": "Duke 200/250/390, RC 200/250/390, 250/390 Adventure"},
-            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "TVS", "Negara": "India", "Model": 3, "Varian": 6, "Rentang CC": "110cc - 225cc", "Contoh Model Unggulan": "Callisto 110/125, Ronin 225 (SS/TD), Apache RTR 200 4V / RTR 310"},
-            {"Kategori Sektor": "Big Bike / Moge Premium", "Merk": "Harley-Davidson", "Negara": "Amerika Serikat", "Model": 3, "Varian": 5, "Rentang CC": "500cc - 1745cc", "Contoh Model Unggulan": "Street 500, Sportster Iron 883 / Forty-Eight, Softail Fat Boy 114 / Breakout 114"},
-            {"Kategori Sektor": "Big Bike / Moge Premium", "Merk": "BMW Motorrad", "Negara": "Jerman", "Model": 3, "Varian": 6, "Rentang CC": "313cc - 1254cc", "Contoh Model Unggulan": "G 310 R / GS, C 400 X / GT, R 1250 GS / GS Adventure (GSA)"}
+            {"Kategori Sektor": "ICE Konvensional", "Merk": "Honda", "Negara": "Jepang", "Model": 22, "Varian": 83, "Rentang CC": "0cc (EV) / 250cc", "Contoh Model Unggulan": "Beat, Vario, Scoopy, PCX, ADV, Stylo 160, EM1 e:, CBR250RR, Forza"},
+            {"Kategori Sektor": "ICE Konvensional", "Merk": "Yamaha", "Negara": "Jepang", "Model": 27, "Varian": 75, "Rentang CC": "0cc (EV) / 250cc", "Contoh Model Unggulan": "NMAX Turbo, Aerox Cyber City, PG-1, Fazzio, Filano, Neo's, XMAX Tech MAX"},
+            {"Kategori Sektor": "ICE Konvensional", "Merk": "Kawasaki", "Negara": "Jepang", "Model": 13, "Varian": 46, "Rentang CC": "0cc (EV) / 451cc", "Contoh Model Unggulan": "Ninja 250, Ninja ZX-25R, Ninja ZX-4RR, Eliminator 500, Ninja e-1, KLX 230 SM"},
+            {"Kategori Sektor": "ICE Konvensional", "Merk": "Vespa (Piaggio)", "Negara": "Italia", "Model": 8, "Varian": 34, "Rentang CC": "125cc - 150cc", "Contoh Model Unggulan": "Sprint S Tech, Primavera Tech, GTS 300 HPE, 946 Dragon, Vespa Elettrica"},
+            {"Kategori Sektor": "ICE Konvensional", "Merk": "Piaggio", "Negara": "Italia", "Model": 6, "Varian": 17, "Rentang CC": "100cc - 300cc", "Contoh Model Unggulan": "Medley S 150 Facelift, Liberty 150 S, Beverly 300, MP3 300 HPE"},
+            {"Kategori Sektor": "ICE Konvensional", "Merk": "Suzuki", "Negara": "Jepang", "Model": 12, "Varian": 30, "Rentang CC": "113cc - 250cc", "Contoh Model Unggulan": "Satria F150, GSX-R150, Access 125 Retro, e-Burgman, V-Strom 800DE"},
+            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Polytron", "Negara": "Indonesia", "Model": 4, "Varian": 7, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Fox-500 (14.7 kW), Fox-R, Fox-S, T-Rex 5000W"},
+            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Alva", "Negara": "Indonesia", "Model": 3, "Varian": 9, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Alva Cervo Q, Alva N3 Boost, Alva One XP, Alva Cervo Dual Batt"},
+            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Gesits", "Negara": "Indonesia", "Model": 3, "Varian": 8, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Gesits G2 Next-Gen, Gesits Garuda Edition, Gesits Raya G/E, Gesits G1"},
+            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Yadea", "Negara": "China", "Model": 5, "Varian": 7, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Yadea Keeness Naked Sport, Yadea Minio Retro, Yadea T9 TTFAR, Yadea E8S Pro"},
+            {"Kategori Sektor": "Motor Listrik (EV)", "Merk": "Viar", "Negara": "Indonesia", "Model": 3, "Varian": 7, "Rentang CC": "0cc (EV Electric)", "Contoh Model Unggulan": "Viar NX Urban, Viar EV1 Vespa Style, Viar Q1 Gen 2, Viar N1/N2"},
+            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "Royal Enfield", "Negara": "Inggris / India", "Model": 8, "Varian": 23, "Rentang CC": "349cc - 650cc", "Contoh Model Unggulan": "Shotgun 650 Bobber, Guerrilla 450, Himalayan 450, Hunter 350, Classic 350 LED"},
+            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "Benelli & Keeway", "Negara": "Italia / China", "Model": 8, "Varian": 16, "Rentang CC": "125cc - 250cc", "Contoh Model Unggulan": "Keeway Napoleon 250, Keeway Benda V252C, Motobi 200 EVO, Patagonian Eagle"},
+            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "KTM", "Negara": "Austria", "Model": 3, "Varian": 16, "Rentang CC": "250cc - 250cc", "Contoh Model Unggulan": "KTM 390 Duke Gen-3 LC4c, KTM 250 Duke Gen-3, RC 390, 390 Adventure"},
+            {"Kategori Sektor": "Retro, Cruiser & Sport", "Merk": "TVS", "Negara": "India", "Model": 4, "Varian": 13, "Rentang CC": "110cc - 225cc", "Contoh Model Unggulan": "Apache RTR 310 Quickshifter, TVS iQube S Smart EV, Ronin 225 TD, Callisto 125"},
+            {"Kategori Sektor": "Big Bike / Moge Premium", "Merk": "Harley-Davidson", "Negara": "Amerika Serikat", "Model": 5, "Varian": 13, "Rentang CC": "494cc - 1745cc", "Contoh Model Unggulan": "Nightster Special 975, Sportster S 1250T, Pan America 1250, Softail Fat Boy 114"},
+            {"Kategori Sektor": "Big Bike / Moge Premium", "Merk": "BMW Motorrad", "Negara": "Jerman", "Model": 6, "Varian": 15, "Rentang CC": "313cc - 1300cc", "Contoh Model Unggulan": "BMW R 1300 GS Matrix, BMW R 1300 GSA, BMW CE 02 EV, BMW CE 04, F 900 GS"}
         ]
         st.dataframe(pd.DataFrame(cat_summary), use_container_width=True, hide_index=True)
-        st.caption("Total Cakupan Master Katalog: 17 Produsen Terkemuka, 108 Model Kendaraan, dan 275 Varian Resmi lintas 4 Kategori Sektor Industri.")
+        st.caption("Total Cakupan Master Katalog: 17 Produsen Terkemuka, 140 Model Kendaraan, dan 419 Varian Resmi lintas 4 Kategori Sektor Industri.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 

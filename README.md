@@ -203,24 +203,24 @@ Master katalog mencakup 17 produsen sepeda motor di Indonesia yang dikelompokkan
 
 | Kategori Sektor | Merk Produsen | Negara Asal | Jumlah Model | Jumlah Varian | Rentang CC Mesin | Model Unggulan Terdaftar |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ICE Konvensional** | **Honda** | Jepang | 21 Model | 76 Varian | 110cc – 250cc | Beat Series, Vario Series, Scoopy, Stylo 160, PCX, ADV, CB150R, CB150X, CBR250RR, CRF150L, Sonic 150R, Forza 250 |
-| **ICE Konvensional** | **Yamaha** | Jepang | 20 Model | 48 Varian | 125cc – 250cc | Mio Series, Fazzio, Grand Filano, NMAX Series, Aerox, XMAX, Lexi LX, MT-15, R15, R25, WR 155 R, XSR 155 |
-| **ICE Konvensional** | **Kawasaki** | Jepang | 11 Model | 34 Varian | 150cc – 250cc | Ninja 250 FI/Karbu, Ninja ZX-25R, KLX 150/230, D-Tracker 150, W175 Series, Versys-X 250, Z125 Pro |
-| **ICE Konvensional** | **Vespa (Piaggio)** | Italia | 6 Model | 21 Varian | 125cc – 150cc | Sprint (i-Get/TFT/Limited), Primavera (Color Vibe/Sean Wotherspoon), GTS Super 150/300, LX 125, S 125, GTV 300 HPE |
-| **ICE Konvensional** | **Piaggio** | Italia | 5 Model | 10 Varian | 100cc – 300cc | Medley S 150, Liberty 150 S, Beverly 300, MP3 300 HPE, Zip 100 |
-| **ICE Konvensional** | **Suzuki** | Jepang | 10 Model | 23 Varian | 113cc – 250cc | Satria F150 FI, GSX-R150, GSX-S150, Address FI, Nex II/Crossover, V-Strom 250SX, Burgman Street 125EX, Inazuma 250 |
-| **Motor Listrik (EV)** | **Polytron** | Indonesia | 3 Model | 5 Varian | 0cc (Electric EV) | Fox-R (Sewa Baterai / Beli Putus), Fox-S (Sewa Baterai / Beli Putus), T-Rex 5000W |
-| **Motor Listrik (EV)** | **Alva** | Indonesia | 3 Model | 5 Varian | 0cc (Electric EV) | Alva One, Alva One XP, Alva Cervo (1 & 2 Batt), Alva Cervo Q, Alva N3 |
-| **Motor Listrik (EV)** | **Gesits** | Indonesia | 2 Model | 3 Varian | 0cc (Electric EV) | Gesits G1, Gesits Raya G, Gesits Raya E |
-| **Motor Listrik (EV)** | **Yadea** | China | 3 Model | 3 Varian | 0cc (Electric EV) | Yadea T9 (TTFAR), Yadea E8S Pro (Graphene), Yadea G6 |
-| **Motor Listrik (EV)** | **Viar** | Indonesia | 2 Model | 4 Varian | 0cc (Electric EV) | Viar Q1 (Gen 1 & 2), Viar N1, Viar N2 |
-| **Retro, Cruiser & Sport** | **Royal Enfield** | Inggris / India | 5 Model | 10 Varian | 350cc – 650cc | Hunter 350, Classic 350 (J-Platform), Meteor 350, Himalayan 411/450, Interceptor/Continental GT 650 |
-| **Retro, Cruiser & Sport** | **Benelli & Keeway** | Italia / China | 5 Model | 8 Varian | 125cc – 250cc | Motobi 200 EVO, Patagonian Eagle 250, Panarea 125, Keeway V250Fi / Benda V252C, Shiny 150 |
-| **Retro, Cruiser & Sport** | **KTM** | Austria | 3 Model | 8 Varian | 250cc – 390cc | Duke 200/250/390, RC 200/250/390, 250/390 Adventure |
-| **Retro, Cruiser & Sport** | **TVS** | India | 3 Model | 6 Varian | 110cc – 225cc | Callisto 110/125, Ronin 225 (SS/TD), Apache RTR 200 4V / RTR 310 |
-| **Big Bike / Moge Premium** | **Harley-Davidson** | Amerika Serikat | 3 Model | 5 Varian | 500cc – 1745cc | Street 500, Sportster Iron 883 / Forty-Eight, Softail Fat Boy 114 / Breakout 114 |
-| **Big Bike / Moge Premium** | **BMW Motorrad** | Jerman | 3 Model | 6 Varian | 313cc – 1254cc | G 310 R / GS, C 400 X / GT, R 1250 GS / GS Adventure (GSA) |
-| **TOTAL** | **17 Merk** | **-** | **108 Model** | **275 Varian** | **EV & 110cc – 1745cc** | **Seluruh Segmen Motor Indonesia (ICE, EV, Moge)** |
+| **ICE Konvensional** | **Honda** | Jepang | 22 Model | 83 Varian | 110cc – 250cc & EV | Beat Series, Vario Series, Scoopy Gen-6 (2025+), PCX 160 Facelift (2025+), Stylo 160, EM1 e:, CUV e:, ICON e:, CRF 250L, CBR250RR |
+| **ICE Konvensional** | **Yamaha** | Jepang | 27 Model | 75 Varian | 125cc – 250cc & EV | NMAX Turbo Tech MAX (2025+), Aerox Cyber City, Grand Filano, Fazzio, PG-1, Neo's EV, E01 EV, XMAX Tech MAX, R15, R25, XSR 155 |
+| **ICE Konvensional** | **Kawasaki** | Jepang | 13 Model | 46 Varian | 150cc – 500cc & EV | Ninja 250 Series, Ninja ZX-25R/ZX-4RR, Eliminator 500 (2024+), Ninja e-1 / Z e-1 EV, KLX 150/230 SE/SM (2025+), W175 Series |
+| **ICE Konvensional** | **Vespa (Piaggio)** | Italia | 8 Model | 34 Varian | 125cc – 300cc & EV | Sprint S Tech (2025+), Primavera Tech Digital, GTS Super 150/300, Vespa 946 Dragon Edition, Vespa Elettrica EV, LX 125, S 125 |
+| **ICE Konvensional** | **Piaggio** | Italia | 6 Model | 17 Varian | 100cc – 300cc | Medley S 150 MIA (2025+), Liberty 150 S, Beverly 300 HPE, MP3 300 HPE, Zip 100 |
+| **ICE Konvensional** | **Suzuki** | Jepang | 12 Model | 30 Varian | 113cc – 800cc & EV | Access 125 Retro (2025+), e-Burgman EV, Burgman Street 125EX, V-Strom 250SX / 800DE, Satria F150 FI, GSX-R150, Nex II |
+| **Motor Listrik (EV)** | **Polytron** | Indonesia | 4 Model | 7 Varian | 0cc (Electric EV) | Fox-500 Flagship 14.7kW (2025+), Fox-R (Sewa/Beli Putus), Fox-S, T-Rex 5000W |
+| **Motor Listrik (EV)** | **Alva** | Indonesia | 3 Model | 9 Varian | 0cc (Electric EV) | Alva Cervo Q Boost Charger (2025+), Alva N3 (2024+), Alva Cervo 1/2 Batt, Alva One, Alva One XP |
+| **Motor Listrik (EV)** | **Gesits** | Indonesia | 3 Model | 8 Varian | 0cc (Electric EV) | Gesits G2 Next-Gen (2025+), Gesits Garuda Special Edition (2024+), Gesits G1, Gesits Raya G / E |
+| **Motor Listrik (EV)** | **Yadea** | China | 5 Model | 7 Varian | 0cc (Electric EV) | Yadea Keeness Naked Sport EV (2024+), Yadea Minio Retro EV (2025+), Yadea T9 TTFAR, Yadea E8S Pro, Yadea G6 |
+| **Motor Listrik (EV)** | **Viar** | Indonesia | 3 Model | 7 Varian | 0cc (Electric EV) | Viar NX (2024+), Viar EV1 Retro (2024+), Viar Q1 (Gen 1 & 2), Viar N1, Viar N2 |
+| **Retro, Cruiser & Sport** | **Royal Enfield** | Inggris / India | 8 Model | 23 Varian | 350cc – 650cc | Shotgun 650 Bobber (2024+), Guerrilla 450 (2025+), Classic 350 Facelift (2025+), Bullet 350 J-Platform, Hunter 350, Himalayan 450 |
+| **Retro, Cruiser & Sport** | **Benelli & Keeway** | Italia / China | 8 Model | 16 Varian | 125cc – 250cc | Keeway Napoleon 250 Bobber (2025+), Keeway Benda V252C, Motobi 200 EVO, Patagonian Eagle 250, Panarea 125, Shiny 150 |
+| **Retro, Cruiser & Sport** | **KTM** | Austria | 3 Model | 16 Varian | 200cc – 390cc | Duke 390 Gen-3 LC4c (2024+), Duke 250 Gen-3, RC 200/250/390, 250/390 Adventure |
+| **Retro, Cruiser & Sport** | **TVS** | India | 4 Model | 13 Varian | 110cc – 312cc & EV | TVS iQube S Smart EV (2025+), Apache RTR 310 Quickshifter (2024+), Ronin 225, Callisto 110/125, Apache RTR 200 4V |
+| **Big Bike / Moge Premium** | **Harley-Davidson** | Amerika Serikat | 5 Model | 13 Varian | 500cc – 1868cc | Nightster Special 975 (2024+), Sportster S 1250T (2024+), Pan America 1250 Special, Breakout 117, Street 500, Fat Boy 114 |
+| **Big Bike / Moge Premium** | **BMW Motorrad** | Jerman | 6 Model | 15 Varian | 313cc – 1300cc & EV | BMW R 1300 GS / GSA (2024/2025+), BMW CE 02 e-Parkourer EV (2024+), BMW CE 04 Maxi EV, BMW F 900 GS, G 310 R/GS, C 400 GT |
+| **TOTAL** | **17 Merk** | **-** | **140 Model** | **419 Varian** | **EV & 110cc – 1868cc** | **Seluruh Segmen Motor Indonesia (ICE, EV, Retro/Cruiser, Moge)** |
 
 ---
 
