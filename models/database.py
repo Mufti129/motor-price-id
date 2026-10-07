@@ -21,5 +21,32 @@ def get_db():
         db.close()
 
 def init_db():
-    from models.catalog import MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats
+    from models.catalog import (
+        MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
+        AuctionLot, WholesalePriceStats
+    )
     Base.metadata.create_all(bind=engine)
+    
+    # Auto-migration for SQLite to guarantee image_url column exists
+    try:
+        import sqlite3
+        if DATABASE_URL.startswith("sqlite"):
+            db_file = DB_PATH
+            if os.path.exists(db_file):
+                conn = sqlite3.connect(db_file)
+                c = conn.cursor()
+                
+                c.execute("PRAGMA table_info(master_models)")
+                cols_m = [r[1] for r in c.fetchall()]
+                if cols_m and "image_url" not in cols_m:
+                    c.execute("ALTER TABLE master_models ADD COLUMN image_url TEXT")
+                    
+                c.execute("PRAGMA table_info(master_variants)")
+                cols_v = [r[1] for r in c.fetchall()]
+                if cols_v and "image_url" not in cols_v:
+                    c.execute("ALTER TABLE master_variants ADD COLUMN image_url TEXT")
+                    
+                conn.commit()
+                conn.close()
+    except Exception:
+        pass

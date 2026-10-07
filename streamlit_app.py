@@ -359,6 +359,12 @@ def ensure_database_initialized():
         if auction_count < 100:
             from data.seed_auction_dataset import seed_auction_database
             seed_auction_database()
+
+        try:
+            from data.populate_catalog_images import populate_all_images
+            populate_all_images()
+        except Exception:
+            pass
     except Exception:
         seed_master_motor_database()
     finally:
@@ -746,7 +752,7 @@ elif menu == "Fair Market Value (FMV) Calculator":
                 else:
                     deprec_badge = "N/A"
 
-                img_url = (selected_var.image_url if selected_var else None) or (model_obj.image_url if model_obj else None) or "https://img.cintamobil.com/2024/06/04/q9a3j5qG/honda-beat-2024-cover-9b2f.png"
+                img_url = (getattr(selected_var, "image_url", None) if selected_var else None) or (getattr(model_obj, "image_url", None) if model_obj else None) or "https://img.cintamobil.com/2024/06/04/q9a3j5qG/honda-beat-2024-cover-9b2f.png"
 
                 st.markdown(f"""
                 <div class="val-hero-container">
@@ -1026,7 +1032,7 @@ elif menu == "Wholesale & Auction Intelligence (JBA & IBID)":
                 corridor = engine.calculate_dual_tier_corridor(var_obj.id, selected_year)
 
                 if corridor:
-                    auc_img = (var_obj.image_url if var_obj else None) or (model_obj.image_url if model_obj else None) or "https://img.cintamobil.com/2024/06/04/q9a3j5qG/honda-beat-2024-cover-9b2f.png"
+                    auc_img = (getattr(var_obj, "image_url", None) if var_obj else None) or (getattr(model_obj, "image_url", None) if model_obj else None) or "https://img.cintamobil.com/2024/06/04/q9a3j5qG/honda-beat-2024-cover-9b2f.png"
                     
                     st.markdown(f"""
                     <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; margin: 16px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 20px;">
@@ -1596,7 +1602,7 @@ elif menu == "Official Master Catalog (12 Years)":
         rows = []
         for v, m, b in catalog_query:
             rows.append({
-                "Foto Unit": v.image_url or m.image_url or "https://img.cintamobil.com/2024/06/04/q9a3j5qG/honda-beat-2024-cover-9b2f.png",
+                "Foto Unit": getattr(v, "image_url", None) or getattr(m, "image_url", None) or "https://img.cintamobil.com/2024/06/04/q9a3j5qG/honda-beat-2024-cover-9b2f.png",
                 "Kategori Sektor": get_brand_sector(b.name),
                 "Brand": b.name,
                 "Origin": b.country_origin or "-",
