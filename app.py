@@ -1160,12 +1160,11 @@ elif menu == "System Documentation & Methodology":
     </div>
     """, unsafe_allow_html=True)
 
-    tab_arch, tab_math, tab_dict, tab_cat, tab_guide = st.tabs([
+    tab_arch, tab_math, tab_dict, tab_cat = st.tabs([
         "1. Architecture & Background",
         "2. Econometric & Valuation Models",
         "3. Data Dictionary & Parameters",
-        "4. Master Catalog Taxonomy",
-        "5. Operations & Deployment Guide"
+        "4. Master Catalog Taxonomy"
     ])
 
     with tab_arch:
@@ -1274,18 +1273,4 @@ elif menu == "System Documentation & Methodology":
         st.caption("Total Cakupan Master Katalog: 6 Produsen Terkemuka, 73 Model Kendaraan, dan 212 Varian Resmi.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with tab_guide:
-        st.markdown('<div class="content-panel"><div class="panel-header">User Operations & Deployment Architecture</div>', unsafe_allow_html=True)
-        st.markdown("""
-        **Lokasi Mengecek Depresiasi Riil:**
-        1. **Menu `Market Price Monitoring & Quartiles`:** Periksa kolom **`Depresiasi Riil (%)`** pada tabel kuartil.
-        2. **Menu `Fair Market Value (FMV) Calculator`:** Periksa badge pill **`Depresiasi Riil dari OTR: XX.X%`** di kotak hasil estimasi.
-        3. **Menu `Market Overview`:** Periksa grafik garis **`12-Year Historical Price Depreciation Curve`**.
 
-        **Panduan Deployment ke Streamlit Cloud:**
-        - **Repository:** `https://github.com/Mufti129/motor-price-id.git`
-        - **Branch:** `main`
-        - **Main file path:** `app.py` atau `streamlit_app.py`
-        - Seluruh pembaruan di branch `main` otomatis tersinkronisasi secara instan.
-        """)
-        st.markdown('</div>', unsafe_allow_html=True)
