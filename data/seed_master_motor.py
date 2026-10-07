@@ -64,6 +64,33 @@ MASTER_MOTOR_DATA = [
                     {"name": "ADV 150 (CBS / ABS)", "start": 2019, "end": 2022, "msrp": 34500000, "aliases": "adv 150, adv 150 abs, adv 150 cbs"},
                     {"name": "ADV 160 (CBS / ABS)", "start": 2022, "end": 2026, "msrp": 36500000, "aliases": "adv 160, adv 160 abs, adv 160 cbs"}
                 ]
+            },
+            {
+                "name": "Genio",
+                "category": "Matic",
+                "cc": 110,
+                "variants": [
+                    {"name": "Genio CBS / ISS (eSAF Ring 14)", "start": 2019, "end": 2022, "msrp": 17800000, "aliases": "honda genio, genio cbs, genio iss"},
+                    {"name": "Genio Facelift (Ring 12)", "start": 2022, "end": 2026, "msrp": 19200000, "aliases": "genio donat, genio new, genio ring 12"}
+                ]
+            },
+            {
+                "name": "CBR 150R",
+                "category": "Sport",
+                "cc": 150,
+                "variants": [
+                    {"name": "CBR 150R K45G (Facelift LED)", "start": 2016, "end": 2020, "msrp": 34000000, "aliases": "cbr 150r facelift, cbr k45g, cbr led lama"},
+                    {"name": "CBR 150R K45R (All New Inverted Fork)", "start": 2021, "end": 2026, "msrp": 37500000, "aliases": "all new cbr 150r, cbr k45r, cbr usd, cbr abs"}
+                ]
+            },
+            {
+                "name": "CB150R",
+                "category": "Sport Naked",
+                "cc": 150,
+                "variants": [
+                    {"name": "CB150R StreetFire LED", "start": 2015, "end": 2021, "msrp": 28000000, "aliases": "cb150r led, cb150r se, cb streetfire"},
+                    {"name": "CB150R StreetFire All New (USD)", "start": 2021, "end": 2026, "msrp": 31500000, "aliases": "all new cb150r, cb150r usd"}
+                ]
             }
         ]
     },
@@ -88,6 +115,24 @@ MASTER_MOTOR_DATA = [
                 "variants": [
                     {"name": "Aerox 155 VVA Old (Standard / R / S-Version)", "start": 2017, "end": 2020, "msrp": 24500000, "aliases": "aerox old, aerox lama, aerox 155 2017 2018 2019, aerox tipe r, aerox keyless"},
                     {"name": "Aerox 155 Connected / CyberCity / ABS", "start": 2020, "end": 2026, "msrp": 28500000, "aliases": "all new aerox, aerox connected, aerox cybercity, aerox abs 2021 2022 2023"}
+                ]
+            },
+            {
+                "name": "Lexi",
+                "category": "Matic",
+                "cc": 125,
+                "variants": [
+                    {"name": "Lexi 125 VVA (Standard / S / ABS)", "start": 2018, "end": 2023, "msrp": 22500000, "aliases": "yamaha lexi, lexi 125, lexi s, lexi abs"},
+                    {"name": "Lexi LX 155 Connected", "start": 2024, "end": 2026, "msrp": 29900000, "aliases": "lexi lx 155, lexi 155, all new lexi"}
+                ]
+            },
+            {
+                "name": "YZF-R15",
+                "category": "Sport",
+                "cc": 155,
+                "variants": [
+                    {"name": "R15 V3 VVA", "start": 2017, "end": 2021, "msrp": 36000000, "aliases": "r15 v3, all new r15, r15 vva"},
+                    {"name": "R15 V4 / R15M Connected ABS", "start": 2021, "end": 2026, "msrp": 44500000, "aliases": "r15 v4, r15m, r15 connected"}
                 ]
             },
             {
@@ -141,6 +186,14 @@ MASTER_MOTOR_DATA = [
                 ]
             },
             {
+                "name": "Ninja ZX-25R",
+                "category": "Sport 4-Cylinder",
+                "cc": 250,
+                "variants": [
+                    {"name": "Ninja ZX-25R 4 Silinder (Standard / SE / RR)", "start": 2020, "end": 2026, "msrp": 105000000, "aliases": "zx25r, zx 25r, ninja 4 silinder, zx25r abs se"}
+                ]
+            },
+            {
                 "name": "KLX 150",
                 "category": "Trail",
                 "cc": 150,
@@ -148,6 +201,22 @@ MASTER_MOTOR_DATA = [
                     {"name": "KLX 150S / 150L", "start": 2009, "end": 2015, "msrp": 25000000, "aliases": "klx 150s, klx 150l, klx lama"},
                     {"name": "KLX 150 BF / SE / Extreme", "start": 2015, "end": 2023, "msrp": 36000000, "aliases": "klx bf, klx 150 bf se, klx usd, klx extreme"},
                     {"name": "KLX 150 Facelift (LED / SE)", "start": 2023, "end": 2026, "msrp": 39500000, "aliases": "klx 150 baru, all new klx 150 led"}
+                ]
+            },
+            {
+                "name": "W175",
+                "category": "Classic / Retro",
+                "cc": 177,
+                "variants": [
+                    {"name": "W175 Standard / SE / Cafe / TR", "start": 2018, "end": 2026, "msrp": 34500000, "aliases": "kawasaki w175, w175 se, w175 cafe, w175 tr, w 175"}
+                ]
+            },
+            {
+                "name": "D-Tracker 150",
+                "category": "Supermoto",
+                "cc": 150,
+                "variants": [
+                    {"name": "D-Tracker 150 SE (Velg 17)", "start": 2015, "end": 2023, "msrp": 35500000, "aliases": "dtracker, d-tracker, dtracker 150, dtracker se"}
                 ]
             }
         ]
