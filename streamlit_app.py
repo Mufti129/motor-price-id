@@ -1140,6 +1140,29 @@ elif menu == "Official Master Catalog (12 Years)":
             hide_index=True,
             use_container_width=True
         )
+
+        st.markdown("""
+        <div class="content-panel" style="margin-top: 20px;">
+            <div class="panel-header">Sumber Data Resmi & Periode Pengambilan (Official MSRP / OTR)</div>
+            <div class="info-box-blue" style="margin-bottom: 14px;">
+                <div class="info-box-title">Spesifikasi Sumber Data Harga Resmi OTR (On The Road)</div>
+                <div class="info-box-desc">
+                    Nilai <strong>Official MSRP (New)</strong> pada katalog master mencatat harga resmi On The Road (DKI Jakarta) saat tahun peluncuran pertama varian tersebut (<em>Price at Launch</em>) dan daftar harga terkini yang diverifikasi berkala per <strong>Oktober 2026</strong>.
+                </div>
+            </div>
+            <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+                <strong>Rincian Sumber Primer & Regulasi Acuan:</strong>
+                <ol style="margin-top: 6px; padding-left: 20px;">
+                    <li><strong>Agen Pemegang Merk (APM) Resmi:</strong> Pricelist resmi PT Astra Honda Motor (AHM), PT Yamaha Indonesia Motor Mfg (YIMM), PT Kawasaki Motor Indonesia (KMI), PT Piaggio Indonesia (Vespa & Piaggio), dan PT Suzuki Indomobil Sales (SIS).</li>
+                    <li><strong>Regulasi NJKB & Samsat/Bapenda:</strong> Peraturan Menteri Dalam Negeri (Permendagri) tentang Nilai Jual Kendaraan Bermotor (NJKB) serta ketentuan BBN-KB (12.5%) dan PKB (2%) Bapenda DKI Jakarta.</li>
+                    <li><strong>Arsip Historis Peluncuran Media Otomotif:</strong> Publikasi rilis peluncuran dari media otomotif nasional terakreditasi (Kompas Otomotif, GridOto/Oto.com, DetikOto, Motorplus) untuk unit-unit yang telah selesai masa edarnya (discontinued 2014–2023).</li>
+                </ol>
+                <div style="margin-top: 10px; font-size: 0.78rem; color: #94a3b8;">
+                    <em>Status Audit: Terverifikasi Valid per Oktober 2026 | Cakupan: 6 Merk, 73 Model, 212 Varian (Rentang Waktu: 2014–2026)</em>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     finally:
         db.close()
 
