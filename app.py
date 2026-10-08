@@ -556,7 +556,7 @@ with st.sidebar:
     st.markdown("""
     <div class="info-box-blue" style="padding: 12px 14px; margin-bottom: 10px;">
         <div class="info-box-title" style="font-size: 0.80rem;">Catalog Scope</div>
-        <div class="info-box-desc" style="font-size: 0.74rem;">17 Brands | 140 Models | 419 Variants | 17,000 Retail | 5,800+ Lots (2014–2026)</div>
+        <div class="info-box-desc" style="font-size: 0.74rem;">17 Brands | 140 Models | 419 Variants | 19,900+ Retail | 7,300+ Lots (2014–2026)</div>
     </div>
     """, unsafe_allow_html=True)
     st.caption("Engine: Python 3.13 | DB: SQLite ORM | Platform: Streamlit Cloud")
