@@ -1573,7 +1573,7 @@ elif menu == "Live Scraper & Crawler Center":
         <div class="info-box-blue">
             <div class="info-box-title">Cakupan Scraping Skala Penuh (Full Master Catalog)</div>
             <div class="info-box-desc">
-                Mengeksekusi pengumpulan data secara menyeluruh untuk seluruh 17 merk produsen (Honda, Yamaha, Kawasaki, Vespa, Piaggio, Suzuki, Polytron, Alva, Gesits, Yadea, Viar, Royal Enfield, Benelli & Keeway, KTM, TVS, Harley-Davidson, dan BMW Motorrad) mencakup 140 model dan 419 varian motor dalam 12 tahun terakhir (2014–2026).
+                Mengeksekusi penarikan dan pembaruan snapshot data pasar secara menyeluruh untuk seluruh 17 merk produsen mencakup 140 model dan 419 varian motor (2014–2026). Seluruh snapshot data historis lama tetap tersimpan dan terjaga secara permanen di database (incremental ingestion).
             </div>
         </div>
         """, unsafe_allow_html=True)

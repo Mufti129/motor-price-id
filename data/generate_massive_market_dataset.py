@@ -73,12 +73,10 @@ def generate_massive_dataset(target_per_brand: int = 1000):
         total_matched = 0
         total_dp = 0
 
-        # Kosongkan listing lama agar fresh dan bersih
-        db.query(ScrapedListing).delete()
-        db.query(MarketPriceStats).delete()
-        db.commit()
+        # Menjaga snapshot data historis agar tidak hilang (akumulatif / append-only)
+        existing_ids = set(r[0] for r in db.query(ScrapedListing.external_id).all())
 
-        print(f"🚀 Memulai generate minimal {target_per_brand} listing per merk...")
+        print(f"[INFO] Memulai penarikan/generate data snapshot (Target: {target_per_brand} listing per merk)...")
 
         for brand in brands:
             brand_count = 0
@@ -86,7 +84,7 @@ def generate_massive_dataset(target_per_brand: int = 1000):
             if not models:
                 continue
 
-            print(f"  -> Generating untuk Merk: {brand.name} ({len(models)} model)...")
+            print(f"  -> Processing Merk: {brand.name} ({len(models)} model)...")
 
             # Ambil semua varian per merk
             variants = db.query(MasterVariant).join(
@@ -188,7 +186,7 @@ def generate_massive_dataset(target_per_brand: int = 1000):
                 else:
                     listing_url = f"https://www.olx.co.id/motor-bekas_c200/q-{urllib.parse.quote(olx_slug)}"
 
-                ext_id = f"gen_{brand.name[:3].lower()}_{brand_count}_{random.randint(100000, 999999)}"
+                ext_id = f"gen_{brand.name[:3].lower()}_{year}_{int(time.time())}_{random.randint(100000, 999999)}"
                 listing_obj = ScrapedListing(
                     source_platform=platform,
                     external_id=ext_id,
@@ -223,14 +221,14 @@ def generate_massive_dataset(target_per_brand: int = 1000):
                     total_dp += 1
 
             db.commit()
-            print(f"    ✓ Merk {brand.name}: {brand_count} dataset tersimpan.")
+            print(f"    [OK] Merk {brand.name}: {brand_count} dataset tersimpan.")
 
         # Hitung statistik pasar harian
-        print("\n📊 Menghitung kalkulasi Fair Market Value (FMV) & Kuantil Pasar...")
+        print("\n[INFO] Menghitung kalkulasi Fair Market Value (FMV) & Kuantil Pasar...")
         pricing_engine = PricingAnalyticsEngine(db)
         pricing_engine.refresh_daily_market_stats()
 
-        print(f"\n✅ SUKSES! Total Dataset: {total_generated} listing | Matched: {total_matched} | Flagged DP: {total_dp}")
+        print(f"\n[SUKSES] Total Dataset Baru: {total_generated} listing | Matched: {total_matched} | Flagged DP: {total_dp}")
         return total_generated
     finally:
         db.close()
