@@ -78,6 +78,29 @@ def get_models(brand_id: Optional[int] = None):
     finally:
         db.close()
 
+@app.get("/api/v1/catalog/variants", tags=["Catalog"])
+def get_variants(model_id: Optional[int] = None):
+    db = SessionLocal()
+    try:
+        query = db.query(MasterVariant)
+        if model_id:
+            query = query.filter(MasterVariant.model_id == model_id)
+        variants = query.order_by(MasterVariant.variant_name).all()
+        return [
+            {
+                "id": v.id,
+                "model_id": v.model_id,
+                "variant_name": v.variant_name,
+                "release_year_start": v.release_year_start,
+                "release_year_end": v.release_year_end,
+                "official_msrp_new": float(v.official_msrp_new) if v.official_msrp_new else None,
+                "image_url": getattr(v, "image_url", None)
+            }
+            for v in variants
+        ]
+    finally:
+        db.close()
+
 @app.post("/api/v1/valuation/calculate", tags=["Valuation"])
 def calculate_fmv(req: ValuationRequest):
     db = SessionLocal()
