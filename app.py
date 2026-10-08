@@ -515,7 +515,7 @@ def load_all_auction_lots_df() -> pd.DataFrame:
                 "Base_Limit_Price": float(r.base_limit_price),
                 "Hammer_Price": float(r.hammer_price) if r.hammer_price else None,
                 "Admin_Fee": float(r.admin_fee) if r.admin_fee else 500000.0,
-                "Status": r.auction_status or "Sold",
+                "Status": (r.auction_status.title() if r.auction_status else "Sold"),
                 "Bids": r.bid_count or 0,
                 "URL": r.url or ""
             })
@@ -1081,7 +1081,7 @@ elif menu == "Wholesale & Auction Intelligence (JBA & IBID)":
         <div class="hero-title">Wholesale & Auction Intelligence (JBA & IBID)</div>
         <div class="hero-subtitle">Dual-tier price intelligence comparing wholesale auction liquidation values (JBA Indonesia & IBID Astra) against retail market asking prices (OLX, FB, Momotor).</div>
         <div class="hero-tags">
-            <span class="hero-tag-pill">5,800+ Official Lots</span>
+            <span class="hero-tag-pill">7,300+ Official Lots</span>
             <span class="hero-tag-pill">JBA & IBID Astra</span>
             <span class="hero-tag-pill">3-Tier Price Corridors</span>
             <span class="hero-tag-pill">Grade A/B/C/D Inspections</span>
@@ -1392,7 +1392,7 @@ elif menu == "Wholesale & Auction Intelligence (JBA & IBID)":
 
             # Summary Metric Row (Proportional Responsive Grid)
             avg_base = filtered_lots["Base_Limit_Price"].mean() if not filtered_lots.empty else 0
-            sold_lots = filtered_lots[filtered_lots["Status"] == "Sold"]
+            sold_lots = filtered_lots[filtered_lots["Status"].str.upper() == "SOLD"]
             avg_hammer = sold_lots["Hammer_Price"].mean() if not sold_lots.empty else 0
             clearance = (len(sold_lots) / len(filtered_lots) * 100.0) if not filtered_lots.empty else 0
 

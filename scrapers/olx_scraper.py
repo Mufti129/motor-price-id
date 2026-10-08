@@ -83,7 +83,7 @@ class OLXMotorScraper:
                     time.sleep(random.uniform(*self.delay_range))
                     return extracted
         except Exception as e:
-            print(f"ℹ️ Info: Live OLX endpoint terproteksi WAF/Timeout ({e}). Mengaktifkan engine multi-source / realistic market feed fallback.")
+            print(f"[INFO] Live OLX endpoint terproteksi WAF/Timeout ({e}). Mengaktifkan engine multi-source / realistic market feed fallback.")
 
         # Fallback realistic live simulation data for query
         return self._generate_realistic_feed(query, location_code, page)
