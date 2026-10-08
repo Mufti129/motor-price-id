@@ -1,1 +1,2 @@
 from scrapers.olx_scraper import OLXMotorScraper
+from scrapers.stealth_scraper import StealthMarketplaceScraper

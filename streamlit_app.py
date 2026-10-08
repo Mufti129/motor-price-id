@@ -16,6 +16,7 @@ from models.catalog import (
 )
 from data.seed_master_motor import seed_master_motor_database
 from scrapers.olx_scraper import OLXMotorScraper
+from scrapers.stealth_scraper import StealthMarketplaceScraper
 from pipeline.normalizer import ListingNormalizer
 from pipeline.scam_detector import ScamAndDPDetector
 from pipeline.entity_matcher import EntityMatcher
@@ -1599,27 +1600,41 @@ elif menu == "Live Scraper & Crawler Center":
         sc1, sc2 = st.columns(2)
         with sc1:
             query_input = st.text_input("Target Keyword Query", "Honda Stylo 160")
-            target_platform = st.selectbox("Marketplace Platform", ["OLX Indonesia (JSON API)", "Momotor.id (REST Endpoint)", "Facebook Marketplace (Stealth Crawler)"])
+            target_platform = st.selectbox(
+                "Marketplace Platform / Engine",
+                [
+                    "Momotor.id (Live Real-Time Stealth Scraper)",
+                    "OLX Indonesia (API Engine + Fallback)",
+                    "JBA Indonesia (Live Auction Lot Crawler)"
+                ]
+            )
         with sc2:
             loc_code = st.selectbox("Region Coverage", ["dki_jakarta", "jawa_barat", "jawa_timur", "jawa_tengah", "banten", "bali", "indonesia"])
-            page_depth = st.number_input("Crawl Page Depth", min_value=1, max_value=10, value=1)
+            page_depth = st.number_input("Crawl Max Items / Depth", min_value=1, max_value=20, value=5)
 
         start_crawl = st.button("Start Targeted Scraping Task", type="primary", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
         if start_crawl:
-            with st.spinner(f"Mengumpulkan data listing untuk '{query_input}' di {loc_code}..."):
+            with st.spinner(f"Mengumpulkan data listing riil untuk '{query_input}' melalui {target_platform}..."):
                 db = get_db_session()
                 try:
                     matcher = EntityMatcher(db)
-                    scraper = OLXMotorScraper()
-
-                    raw_items = scraper.search_listings(
-                        query=query_input,
-                        location_code=loc_code,
-                        page=0,
-                        page_size=20 * page_depth
-                    )
+                    
+                    if "Momotor.id" in target_platform:
+                        stealth_engine = StealthMarketplaceScraper()
+                        raw_items = stealth_engine.scrape_momotor_live(keyword=query_input, max_items=int(page_depth * 4))
+                    elif "JBA Indonesia" in target_platform:
+                        stealth_engine = StealthMarketplaceScraper()
+                        raw_items = stealth_engine.scrape_jba_live_lots(max_items=int(page_depth * 3))
+                    else:
+                        scraper = OLXMotorScraper()
+                        raw_items = scraper.search_listings(
+                            query=query_input,
+                            location_code=loc_code,
+                            page=0,
+                            page_size=int(20 * page_depth)
+                        )
 
                     added_count = 0
                     matched_count = 0
