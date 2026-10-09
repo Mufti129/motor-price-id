@@ -45,9 +45,51 @@ class StealthMarketplaceScraper:
             return numbers[0]
         return 25000
 
-    def scrape_momotor_live(self, keyword: str = 'Honda Beat', max_items: int = 20) -> List[Dict[str, Any]]:
+    def scrape_momotor_deep_item(self, page, item_url: str) -> Dict[str, Any]:
         """
-        Mengekstrak data listing riil dari platform Momotor.id secara live.
+        Navigasi ke halaman detail produk spesifik (Tahap 2) untuk mengekstrak spesifikasi granular,
+        deskripsi lengkap dari penjual, galeri foto unit, dan detail diler.
+        """
+        detail_data = {
+            "full_description": "",
+            "seller_name": "",
+            "transmission": "Otomatis",
+            "fuel_type": "Bensin",
+            "image_urls": [],
+            "color": "Standard"
+        }
+        try:
+            page.goto(item_url, timeout=self.timeout_ms, wait_until='domcontentloaded')
+            time.sleep(1.5)
+            
+            # Ekstraksi deskripsi lengkap
+            desc_elem = page.query_selector('div[class*="description"], div[class*="desc"], p[class*="description"]')
+            if desc_elem:
+                detail_data["full_description"] = desc_elem.inner_text().strip()
+                
+            # Ekstraksi nama penjual / diler
+            seller_elem = page.query_selector('div[class*="dealer"], div[class*="seller"], h3[class*="dealer"]')
+            if seller_elem:
+                detail_data["seller_name"] = seller_elem.inner_text().strip()
+                
+            # Ekstraksi URL gambar
+            img_elems = page.query_selector_all('img[src*="momotor.id"], img[src*="cloudinary"], img[src*="storage"]')
+            img_urls = []
+            for img in img_elems[:5]:
+                src = img.get_attribute('src')
+                if src and src.startswith('http'):
+                    img_urls.append(src)
+            detail_data["image_urls"] = img_urls
+        except Exception as err:
+            print(f"Deep scraping error for {item_url}: {err}")
+            
+        return detail_data
+
+    def scrape_momotor_live(self, keyword: str = 'Honda Beat', max_items: int = 20, deep_crawl: bool = False) -> List[Dict[str, Any]]:
+        """
+        Mengekstrak data listing riil dari platform Momotor.id secara live menggunakan metodologi 2-tahap:
+        1. Pencarian keyword -> ekstraksi daftar listing aktif.
+        2. Kunjungan mendalam ke setiap URL postingan spesifik jika deep_crawl=True.
         """
         import urllib.parse
         encoded_kw = urllib.parse.quote_plus(keyword)
@@ -77,6 +119,7 @@ class StealthMarketplaceScraper:
                 time.sleep(3)
                 
                 cards = page.query_selector_all('a[href*="/motor-bekas/"]')
+                item_links = []
                 
                 for c in cards[:max_items]:
                     href = c.get_attribute('href')
@@ -126,7 +169,7 @@ class StealthMarketplaceScraper:
                             
                     ext_id = "momotor_" + hashlib.md5(full_url.encode("utf-8")).hexdigest()[:10]
                     
-                    extracted_listings.append({
+                    item_obj = {
                         "source_platform": "momotor",
                         "external_id": ext_id,
                         "url": full_url,
@@ -143,8 +186,21 @@ class StealthMarketplaceScraper:
                         "province": "Indonesia",
                         "plate_region": "B",
                         "seller_type": "Dealer"
-                    })
+                    }
+                    extracted_listings.append(item_obj)
+                    item_links.append((item_obj, full_url))
                     
+                # Eksekusi Tahap 2: Kunjungan mendalam per URL postingan jika diaktifkan
+                if deep_crawl and item_links:
+                    for obj, url in item_links:
+                        deep_info = self.scrape_momotor_deep_item(page, url)
+                        if deep_info.get("full_description"):
+                            obj["raw_description"] = deep_info["full_description"]
+                        if deep_info.get("seller_name"):
+                            obj["seller_name"] = deep_info["seller_name"]
+                        if deep_info.get("image_urls"):
+                            obj["image_urls"] = deep_info["image_urls"]
+                            
             except Exception as e:
                 print(f"Error during live Momotor scraping: {e}")
             finally:
