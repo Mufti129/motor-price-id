@@ -23,7 +23,8 @@ def get_db():
 def init_db():
     from models.catalog import (
         MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
-        AuctionLot, WholesalePriceStats
+        AuctionLot, WholesalePriceStats, ListingPriceHistory, VehicleHistoryReport,
+        ListingImageAnalysis, B2BApiClient, ApiUsageLog, UserDealAlert
     )
     Base.metadata.create_all(bind=engine)
     

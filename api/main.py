@@ -185,6 +185,177 @@ def get_arbitrage_deals(min_discount: float = 12.0):
     finally:
         db.close()
 
+# Modul Lanjutan Baru
+
+class DealAlertSubscriptionRequest(BaseModel):
+    user_contact: str = Field(..., description="Nomor WhatsApp atau Email notifikasi")
+    variant_id: int = Field(..., description="ID Master Variant target")
+    target_year: Optional[int] = Field(None, description="Tahun motor yang dicari")
+    target_city: Optional[str] = Field(None, description="Kota target")
+    max_price: float = Field(..., description="Batas harga maksimum")
+    min_discount_pct: float = Field(15.0, description="Minimal persentase diskon dari FMV")
+
+@app.post("/api/v1/alerts/subscribe", tags=["Deal Alerts & Arbitrage"])
+def subscribe_deal_alert(req: DealAlertSubscriptionRequest):
+    from models.catalog import UserDealAlert
+    db = SessionLocal()
+    try:
+        alert = UserDealAlert(
+            user_contact=req.user_contact,
+            variant_id=req.variant_id,
+            target_year=req.target_year,
+            target_city=req.target_city,
+            max_price=req.max_price,
+            min_discount_pct=req.min_discount_pct,
+            is_active=True
+        )
+        db.add(alert)
+        db.commit()
+        db.refresh(alert)
+        return {
+            "status": "SUCCESS",
+            "message": "Langganan notifikasi deal murah berhasil diaktifkan.",
+            "alert_id": alert.id,
+            "details": {
+                "contact": alert.user_contact,
+                "variant_id": alert.variant_id,
+                "max_price": float(alert.max_price),
+                "min_discount": float(alert.min_discount_pct)
+            }
+        }
+    finally:
+        db.close()
+
+@app.get("/api/v1/alerts/list", tags=["Deal Alerts & Arbitrage"])
+def list_deal_alerts():
+    from models.catalog import UserDealAlert
+    db = SessionLocal()
+    try:
+        alerts = db.query(UserDealAlert).filter(UserDealAlert.is_active == True).order_by(UserDealAlert.created_at.desc()).all()
+        return [
+            {
+                "id": a.id,
+                "user_contact": a.user_contact,
+                "variant_id": a.variant_id,
+                "target_year": a.target_year,
+                "target_city": a.target_city or "Seluruh Indonesia",
+                "max_price": float(a.max_price),
+                "min_discount_pct": float(a.min_discount_pct),
+                "created_at": a.created_at.isoformat() if a.created_at else None
+            }
+            for a in alerts
+        ]
+    finally:
+        db.close()
+
+@app.get("/api/v1/history/vehicle/{license_plate}", tags=["Vehicle History & Inspection"])
+def get_vehicle_history(license_plate: str):
+    from models.catalog import VehicleHistoryReport
+    db = SessionLocal()
+    try:
+        clean_plate = license_plate.replace("-", " ").strip().upper()
+        report = db.query(VehicleHistoryReport).filter(VehicleHistoryReport.license_plate.ilike(f"%{clean_plate}%")).first()
+        if not report:
+            raise HTTPException(status_code=404, detail=f"Rekam jejak plat nomor '{license_plate}' belum terdaftar.")
+        
+        return {
+            "license_plate": report.license_plate,
+            "chassis_hash": report.vin_chassis_hash,
+            "vehicle_info": {
+                "brand": report.brand_name,
+                "model": report.model_name,
+                "year": report.production_year
+            },
+            "inspection_record": {
+                "verified_odometer_km": report.verified_odometer,
+                "last_service_date": report.last_service_date.isoformat() if report.last_service_date else None,
+                "flood_incident": report.flood_history_flag,
+                "accident_incident": report.accident_history_flag,
+                "etle_status": report.etle_ticket_status,
+                "tax_valid_until": report.stnk_tax_valid_until.isoformat() if report.stnk_tax_valid_until else None,
+                "notes": report.notes
+            }
+        }
+    finally:
+        db.close()
+
+@app.get("/api/v1/listing/{listing_id}/price-history", tags=["Listing Analytics"])
+def get_listing_price_history(listing_id: int):
+    from models.catalog import ListingPriceHistory, ScrapedListing
+    db = SessionLocal()
+    try:
+        listing = db.query(ScrapedListing).filter(ScrapedListing.id == listing_id).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing ID tidak ditemukan.")
+        
+        history = db.query(ListingPriceHistory).filter(ListingPriceHistory.listing_id == listing_id).order_by(ListingPriceHistory.recorded_at.asc()).all()
+        return {
+            "listing_id": listing.id,
+            "title": listing.title,
+            "current_price": float(listing.price),
+            "price_drops_count": len(history),
+            "history": [
+                {
+                    "old_price": float(h.old_price),
+                    "new_price": float(h.new_price),
+                    "drop_percentage": float(h.price_drop_pct),
+                    "recorded_at": h.recorded_at.isoformat() if h.recorded_at else None
+                }
+                for h in history
+            ]
+        }
+    finally:
+        db.close()
+
+@app.get("/api/v1/b2b/clients", tags=["B2B Corporate"])
+def get_b2b_clients():
+    from models.catalog import B2BApiClient
+    db = SessionLocal()
+    try:
+        clients = db.query(B2BApiClient).filter(B2BApiClient.is_active == True).all()
+        return [
+            {
+                "id": c.id,
+                "company_name": c.company_name,
+                "contact_email": c.contact_email,
+                "tier": c.tier,
+                "rate_limit_per_minute": c.rate_limit_per_minute,
+                "api_key_masked": f"{c.api_key[:12]}...{c.api_key[-4:]}"
+            }
+            for c in clients
+        ]
+    finally:
+        db.close()
+
+@app.get("/api/v1/b2b/analytics/usage", tags=["B2B Corporate"])
+def get_b2b_usage_analytics():
+    from models.catalog import ApiUsageLog, B2BApiClient
+    db = SessionLocal()
+    try:
+        total_requests = db.query(ApiUsageLog).count()
+        clients_count = db.query(B2BApiClient).count()
+        recent_logs = db.query(ApiUsageLog, B2BApiClient.company_name).join(
+            B2BApiClient, ApiUsageLog.client_id == B2BApiClient.id
+        ).order_by(ApiUsageLog.requested_at.desc()).limit(15).all()
+
+        return {
+            "total_corporate_partners": clients_count,
+            "total_logged_requests": total_requests,
+            "recent_telemetry": [
+                {
+                    "company": comp,
+                    "endpoint": log.endpoint,
+                    "status_code": log.status_code,
+                    "latency_ms": float(log.response_time_ms),
+                    "timestamp": log.requested_at.isoformat() if log.requested_at else None
+                }
+                for log, comp in recent_logs
+            ]
+        }
+    finally:
+        db.close()
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

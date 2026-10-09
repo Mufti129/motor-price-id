@@ -94,6 +94,8 @@ class ScrapedListing(Base):
     )
 
     matched_variant = relationship("MasterVariant", back_populates="scraped_listings")
+    price_history = relationship("ListingPriceHistory", back_populates="listing", cascade="all, delete-orphan")
+    image_analyses = relationship("ListingImageAnalysis", back_populates="listing", cascade="all, delete-orphan")
 
 
 class AuctionLot(Base):
@@ -192,4 +194,117 @@ class MarketPriceStats(Base):
     __table_args__ = (
         UniqueConstraint("stat_date", "variant_id", "year", "city", name="uq_stat_date_var_year_city"),
     )
+
+
+class ListingPriceHistory(Base):
+    """
+    Riwayat Penurunan atau Perubahan Harga Listing Retail.
+    Digunakan untuk menganalisis Days-on-Market dan tren Price Drop.
+    """
+    __tablename__ = "listing_price_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, ForeignKey("scraped_listings.id", ondelete="CASCADE"), nullable=False, index=True)
+    old_price = Column(Numeric(15, 2), nullable=False)
+    new_price = Column(Numeric(15, 2), nullable=False)
+    price_drop_pct = Column(Numeric(5, 2), nullable=False) # e.g. -5.25%
+    recorded_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    listing = relationship("ScrapedListing", back_populates="price_history")
+
+
+class VehicleHistoryReport(Base):
+    """
+    Rekam Jejak Historis Kendaraan Berdasarkan Plat Nomor / VIN Rangka.
+    Mencatat rekam odometri berkala, riwayat banjir, kecelakaan, dan status tilang ETLE.
+    """
+    __tablename__ = "vehicle_history_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    license_plate = Column(String(30), unique=True, nullable=False, index=True) # e.g. B 1234 XYZ
+    vin_chassis_hash = Column(String(64), nullable=True, index=True)
+    brand_name = Column(String(50), nullable=True)
+    model_name = Column(String(100), nullable=True)
+    production_year = Column(Integer, nullable=True)
+    verified_odometer = Column(Integer, nullable=True)
+    last_service_date = Column(Date, nullable=True)
+    flood_history_flag = Column(Boolean, default=False)
+    accident_history_flag = Column(Boolean, default=False)
+    etle_ticket_status = Column(String(50), default="Clear / Bebas Tilang") # 'Clear', 'Ada Tilang Aktif'
+    stnk_tax_valid_until = Column(Date, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ListingImageAnalysis(Base):
+    """
+    Hasil Ekstraksi & Inspeksi Computer Vision / AI pada Foto Listing.
+    Mendeteksi kerusakan bodi/baret, knalpot brong non-standar, dan skor keaslian foto.
+    """
+    __tablename__ = "listing_image_analysis"
+
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, ForeignKey("scraped_listings.id", ondelete="CASCADE"), nullable=False, index=True)
+    image_url = Column(Text, nullable=False)
+    scratch_damage_score = Column(Numeric(5, 2), default=0.0) # Skala 0-100 (semakin tinggi semakin banyak baret)
+    paint_originality_score = Column(Numeric(5, 2), default=95.0) # Persentase cat orisinil
+    non_standard_exhaust_flag = Column(Boolean, default=False) # Deteksi knalpot non-standar
+    image_authenticity_score = Column(Numeric(5, 2), default=98.0) # Deteksi foto asli vs comotan internet
+    detected_color = Column(String(50), nullable=True)
+    analyzed_at = Column(DateTime, default=datetime.utcnow)
+
+    listing = relationship("ScrapedListing", back_populates="image_analyses")
+
+
+class B2BApiClient(Base):
+    """
+    Manajemen Mitra Korporasi / Klien B2B (Leasing, Fintech, Dealer Group).
+    """
+    __tablename__ = "b2b_api_clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String(150), nullable=False)
+    contact_email = Column(String(100), unique=True, nullable=False, index=True)
+    api_key = Column(String(64), unique=True, nullable=False, index=True)
+    tier = Column(String(30), default="Enterprise") # 'Starter', 'Professional', 'Enterprise'
+    rate_limit_per_minute = Column(Integer, default=600)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    logs = relationship("ApiUsageLog", back_populates="client", cascade="all, delete-orphan")
+
+
+class ApiUsageLog(Base):
+    """
+    Audit Log Request API B2B untuk Pelaporan SLA & Kuota.
+    """
+    __tablename__ = "api_usage_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("b2b_api_clients.id", ondelete="CASCADE"), nullable=False, index=True)
+    endpoint = Column(String(150), nullable=False)
+    status_code = Column(Integer, nullable=False)
+    response_time_ms = Column(Numeric(8, 2), default=15.0)
+    requested_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    client = relationship("B2BApiClient", back_populates="logs")
+
+
+class UserDealAlert(Base):
+    """
+    Langganan Notifikasi Deal Arbitrase / Motor Murah di Bawah Pasar.
+    """
+    __tablename__ = "user_deal_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_contact = Column(String(150), nullable=False) # WhatsApp atau Email
+    variant_id = Column(Integer, ForeignKey("master_variants.id"), nullable=False)
+    target_year = Column(Integer, nullable=True)
+    target_city = Column(String(100), nullable=True)
+    max_price = Column(Numeric(15, 2), nullable=False) # Batas harga maksimal
+    min_discount_pct = Column(Numeric(5, 2), default=15.0) # Minimal diskon dari harga wajar
+    is_active = Column(Boolean, default=True)
+    last_triggered_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 
