@@ -21,9 +21,14 @@ USER_AGENTS = [
 class StealthMarketplaceScraper:
     """Mesin crawler anti-blokir berbasis Playwright untuk marketplace motor bekas Indonesia."""
 
-    def __init__(self, headless: bool = True, timeout_ms: int = 30000):
+    def __init__(self, headless: bool = True, timeout_ms: int = 35000, delay_range: tuple = (2.5, 5.0)):
         self.headless = headless
         self.timeout_ms = timeout_ms
+        self.delay_range = delay_range
+
+    def _sleep_human_like(self):
+        """Jeda acak yang diperpanjang untuk menghindari pemblokiran IP dan WAF."""
+        time.sleep(random.uniform(*self.delay_range))
 
     def _clean_price(self, price_str: str) -> float:
         """Konversi string harga seperti 'Rp 20.000.000' menjadi float 20000000.0"""
@@ -65,7 +70,9 @@ class StealthMarketplaceScraper:
         }
         try:
             page.goto(item_url, timeout=self.timeout_ms, wait_until='domcontentloaded')
-            time.sleep(1.5)
+            # Simulasi scroll manusia & jeda aman
+            page.evaluate("window.scrollBy(0, 300)")
+            self._sleep_human_like()
             
             # Ekstraksi deskripsi lengkap
             desc_elem = page.query_selector('div[class*="description"], div[class*="desc"], p[class*="description"]')
