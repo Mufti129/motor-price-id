@@ -2358,27 +2358,86 @@ elif menu == "System Documentation & Methodology":
         st.markdown('</div>', unsafe_allow_html=True)
 
     with tab_dict:
-        st.markdown('<div class="content-panel"><div class="panel-header">Data Dictionary & Schema Parameters</div>', unsafe_allow_html=True)
+        st.markdown('<div class="content-panel"><div class="panel-header">Data Dictionary, Schema Parameters & Taksonomi Hirarki</div>', unsafe_allow_html=True)
+        
+        st.markdown("##### 1. Kamus Data & Parameter Database")
         dict_data = [
             {"Parameter": "ID", "Tipe": "Integer", "Definisi": "Identifikator unik data listing."},
-            {"Parameter": "Kategori Sektor", "Tipe": "String", "Definisi": "Klasifikasi sektor industri otomotif (ICE Konvensional, Motor Listrik (EV), Retro, Cruiser & Sport, Big Bike / Moge Premium)."},
+            {"Parameter": "Kategori Sektor", "Tipe": "String", "Definisi": "Klasifikasi sektor industri makro (ICE Konvensional, Motor Listrik (EV), Retro, Cruiser & Sport, Big Bike / Moge Premium)."},
+            {"Parameter": "Kategori Bodi", "Tipe": "String", "Definisi": "Klasifikasi segmen fungsional dan bentuk bodi (Matic, Maxi Scooter, Sport Fairing, Naked, Bebek, Trail, Cruiser)."},
             {"Parameter": "Platform", "Tipe": "String", "Definisi": "Marketplace sumber data (OLX, FACEBOOK, MOMOTOR, JBA, IBID)."},
             {"Parameter": "Title", "Tipe": "String", "Definisi": "Judul asli iklan setelah dinormalisasi NLP."},
-            {"Parameter": "Brand", "Tipe": "String", "Definisi": "Merk pabrikan motor resmi (17 Merk)."},
-            {"Parameter": "Model", "Tipe": "String", "Definisi": "Lini model sepeda motor (140 Model terdaftar)."},
+            {"Parameter": "Brand", "Tipe": "String", "Definisi": "Merk pabrikan motor resmi (17 Merk terdaftar)."},
+            {"Parameter": "Model", "Tipe": "String", "Definisi": "Lini keluarga model motor (140 Model resmi)."},
             {"Parameter": "Variant", "Tipe": "String", "Definisi": "Varian spesifik dan generasi motor (419 Varian master)."},
+            {"Parameter": "Engine_CC", "Tipe": "Integer", "Definisi": "Kapasitas ruang bakar mesin dalam CC (110–1800cc) atau 0cc untuk EV Electric."},
             {"Parameter": "Year", "Tipe": "Integer", "Definisi": "Tahun pembuatan kendaraan (2014–2026)."},
             {"Parameter": "Price", "Tipe": "Numeric", "Definisi": "Harga riil transaksi tunai (IDR)."},
             {"Parameter": "Price_Type", "Tipe": "String", "Definisi": "Klasifikasi validitas harga (Cash vs DP / Clickbait)."},
             {"Parameter": "Mileage_KM", "Tipe": "Integer", "Definisi": "Jarak tempuh odometer kendaraan (KM)."},
             {"Parameter": "Tax_Status", "Tipe": "String", "Definisi": "Status legalitas pajak (Hidup / Panjang, Mati / Off, Unknown)."},
-            {"Parameter": "BPKB", "Tipe": "String", "Definisi": "Kelengkapan dokumen BPKB (Lengkap vs Tidak Ada)."},
+            {"Parameter": "BPKB & STNK", "Tipe": "Boolean", "Definisi": "Kelengkapan dokumen fisik kepemilikan kendaraan."},
             {"Parameter": "City & Province", "Tipe": "String", "Definisi": "Lokasi administratif unit kendaraan."},
             {"Parameter": "MSRP_New", "Tipe": "Numeric", "Definisi": "Harga resmi On The Road (OTR) baru saat rilis peluncuran."},
             {"Parameter": "Depresiasi Riil (%)", "Tipe": "Numeric", "Definisi": "Persentase penyusutan harga pasar terhadap MSRP OTR baru."},
+            {"Parameter": "Price_Drop_Tracking", "Tipe": "Numeric", "Definisi": "Riwayat dan persentase pemotongan harga yang dilakukan penjual."},
+            {"Parameter": "ETLE_Incident_Report", "Tipe": "String", "Definisi": "Rekam jejak tilang elektronik, riwayat banjir, dan benturan."},
+            {"Parameter": "AI_Image_Score", "Tipe": "Numeric", "Definisi": "Hasil inspeksi Computer Vision (skor baret, orisinalitas cat, knalpot non-standar)."},
             {"Parameter": "URL", "Tipe": "Text", "Definisi": "Tautan deep-search resmi aktif menuju marketplace terkait."}
         ]
         st.dataframe(pd.DataFrame(dict_data), use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+        st.markdown("##### 2. Perbedaan & Hirarki: Sektor Industri, Kategori Bodi, Model, dan Engine (CC)")
+        
+        st.markdown("""
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; margin-bottom: 16px;">
+            <p style="margin: 0; font-size: 0.88rem; color: #334155; line-height: 1.55;">
+                Di dalam sistem <strong>MotorPrice ID</strong>, keempat parameter ini berada pada tingkatan taksonomi yang berbeda dengan tujuan analitik yang saling melengkapi:
+            </p>
+            <ul style="margin-top: 8px; margin-bottom: 0; font-size: 0.84rem; color: #475569; line-height: 1.6;">
+                <li><strong>Sektor Industri (Makroekonomi):</strong> Mengelompokkan jenis industri dan teknologi penggerak (ICE Konvensional, Motor Listrik EV, Retro/Cruiser Hobi, dan Big Bike Premium).</li>
+                <li><strong>Kategori Bodi (Fungsional / Ergonomi):</strong> Mengelompokkan bentuk fisik, postur berkendara, dan peruntukan medan jalan (Matic, Maxi Scooter, Sport, Bebek/Underbone, Trail/Adventure, Cruiser).</li>
+                <li><strong>Model (Keluarga Produk Pabrikan):</strong> Nama seri komersial produk yang dirilis pabrikan (misal: <em>Beat, Vario, NMAX, PCX, Ninja 250, Classic 350, Fox-R</em>).</li>
+                <li><strong>Engine Capacity / CC (Kubikasi & Performa):</strong> Volume ruang bakar silinder dalam CC atau daya listrik dalam kW yang menentukan performa tenaga, konsumsi BBM, dan tarif pajak PKB.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            st.markdown("###### Kasus 1: Kapasitas Mesin Sama (150–160cc), Beda Kategori & Model")
+            st.caption("Mesin setara memiliki target pembeli dan laju depresiasi berbeda:")
+            ex1_data = [
+                {"Model": "Honda Vario 160", "Kategori": "Matic Komuter", "CC": "160 cc", "Karakter Pasar": "Komuter perkotaan, dek rata, likuiditas sangat cepat."},
+                {"Model": "Honda ADV 160", "Kategori": "Maxi Adventure", "CC": "160 cc", "Karakter Pasar": "Touring semi-offroad, suspensi tinggi, harga premium."},
+                {"Model": "Honda CBR 150R", "Kategori": "Sport Fairing", "CC": "150 cc", "Karakter Pasar": "Penggemar kecepatan & sirkuit, posisi racy merunduk."},
+                {"Model": "Honda CRF 150L", "Kategori": "Trail Dual-Sport", "CC": "150 cc", "Karakter Pasar": "Hobi trabas tanah/lumpur, depresiasi sangat lambat/tahan."}
+            ]
+            st.dataframe(pd.DataFrame(ex1_data), use_container_width=True, hide_index=True)
+
+        with col_ex2:
+            st.markdown("###### Kasus 2: Model Sama, Pilihan Kapasitas Mesin (CC) Berbeda")
+            st.caption("Pabrikan menggunakan nama model serupa untuk kubikasi berbeda:")
+            ex2_data = [
+                {"Model": "Honda Vario 110", "Kategori": "Matic", "CC": "110 cc", "Segmen": "Entry-level komuter irit."},
+                {"Model": "Honda Vario 125", "Kategori": "Matic", "CC": "125 cc", "Segmen": "Mid-level terlaris."},
+                {"Model": "Honda Vario 150", "Kategori": "Matic", "CC": "150 cc", "Segmen": "Generasi eSP Keyless."},
+                {"Model": "Honda Vario 160", "Kategori": "Matic", "CC": "160 cc", "Segmen": "Mesin 4-Katup eSP+ terbaru."},
+                {"Model": "Kawasaki Ninja 250", "Kategori": "Sport", "CC": "250 cc (2-Silinder)", "Segmen": "Sport harian populer."},
+                {"Model": "Kawasaki Ninja ZX-25R", "Kategori": "Supersport", "CC": "250 cc (4-Silinder)", "Segmen": "High-revving 17.000 RPM."}
+            ]
+            st.dataframe(pd.DataFrame(ex2_data), use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+        st.markdown("##### 3. Rincian 4 Kategori Sektor Industri Utama")
+        sector_detail = [
+            {"Kategori Sektor": "1. ICE Konvensional", "Pabrikan": "Honda, Yamaha, Suzuki, Kawasaki, Vespa, Piaggio", "Rentang CC": "110cc – 250cc", "Pangsa Pasar": "78.4%", "Likuiditas": "Sangat Cepat (< 10 hari)", "Karakteristik & Faktor Valuasi": "Motor bensin harian komuter. Faktor utama: status pajak tahunan, kelengkapan BPKB/STNK, dan odometer pemakaian."},
+            {"Kategori Sektor": "2. Motor Listrik (EV)", "Pabrikan": "Polytron, Alva, Gesits, Yadea, Viar", "Rentang CC": "0cc (1.2 kW – 14.7 kW)", "Pangsa Pasar": "8.2%", "Likuiditas": "Menengah (14–25 hari)", "Karakteristik & Faktor Valuasi": "Penggerak baterai murni. Faktor utama: kesehatan baterai (State of Health / SoH) dan sistem baterai (beli putus vs langganan)."},
+            {"Kategori Sektor": "3. Retro, Cruiser & Sport", "Pabrikan": "Royal Enfield, Benelli, Keeway, KTM, TVS", "Rentang CC": "125cc – 650cc", "Pangsa Pasar": "9.6%", "Likuiditas": "Segmented (10–20 hari)", "Karakteristik & Faktor Valuasi": "Motor gaya hidup & hobi komunitas. Faktor utama: nilai estetika orisinil, kelengkapan aksesoris resmi, dan minim modifikasi ekstrem."},
+            {"Kategori Sektor": "4. Big Bike / Moge Premium", "Pabrikan": "BMW Motorrad, Harley-Davidson", "Rentang CC": "313cc – 1800cc+", "Pangsa Pasar": "3.8%", "Likuiditas": "Eksklusif (20–45 hari)", "Karakteristik & Faktor Valuasi": "Motor kubikasi besar & luxury touring. Faktor utama: kelengkapan dokumen resmi Agen Pemegang Merek (APM / Form A resmi)."}
+        ]
+        st.dataframe(pd.DataFrame(sector_detail), use_container_width=True, hide_index=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with tab_cat:
