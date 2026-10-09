@@ -204,12 +204,14 @@ class OLXMotorScraper:
         for idx, item in enumerate(feed_templates):
             combined = f"{item['title']} {item['desc']}".lower()
             if not q_clean or any(word in combined for word in q_clean.split()):
-                clean_slug = "-".join(item["title"].lower().replace("/", " ").replace("(", " ").replace(")", " ").split())
+                # Gunakan 2-3 kata kunci utama (Brand + Model) agar pencarian di OLX selalu menghasilkan data riil tanpa over-filter
+                words = [w for w in item["title"].lower().replace("/", " ").replace("(", " ").replace(")", " ").split() if w not in ["mulus", "istimewa", "siap", "pakai", "tangan", "pertama", "pajak", "panjang", "km", "rendah", "butuh", "uang", "cepat", "bu", "silver", "hitam", "putih", "merah", "doff", "monotone", "lama", "new", "all"]]
+                concise_slug = "-".join(words[:3]) if words else "motor-bekas"
                 item_iid = 900000000 + (abs(hash(item['title'])) % 99999999)
                 matched_items.append({
                     "source_platform": "olx",
                     "external_id": f"olx_{item_iid}",
-                    "url": f"https://www.olx.co.id/motor-bekas_c200/q-{clean_slug}",
+                    "url": f"https://www.olx.co.id/motor-bekas_c200/q-{concise_slug}",
                     "title": item["title"],
                     "description": item["desc"],
                     "price": item["price"],
