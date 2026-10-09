@@ -197,7 +197,11 @@ def seed_auction_database(target_total: int = 5500):
                     bid_count = 0
                     hammer_price = None
 
-                admin_fee = 500_000.0 if msrp < 80_000_000 else 1_000_000.0
+                clean_model_kw = model.name.replace("Series", "").strip()
+                if is_jba:
+                    lot_url = f"https://www.jba.co.id/id/lelang-motor?keyword={clean_model_kw.replace(' ', '+')}"
+                else:
+                    lot_url = f"https://www.ibid.astra.co.id/cari-motor-bekas"
 
                 lot = AuctionLot(
                     source_platform=platform,
@@ -226,7 +230,7 @@ def seed_auction_database(target_total: int = 5500):
                     admin_fee=admin_fee,
                     auction_status=auction_status,
                     bid_count=bid_count,
-                    url=f"https://www.{platform.replace('_', '.')}.co.id/lot-detail/{lot_number.lower()}"
+                    url=lot_url
                 )
                 lots_to_insert.append(lot)
 

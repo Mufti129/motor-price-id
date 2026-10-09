@@ -204,10 +204,12 @@ class OLXMotorScraper:
         for idx, item in enumerate(feed_templates):
             combined = f"{item['title']} {item['desc']}".lower()
             if not q_clean or any(word in combined for word in q_clean.split()):
+                clean_slug = "-".join(item["title"].lower().replace("/", " ").replace("(", " ").replace(")", " ").split())
+                item_iid = 900000000 + (abs(hash(item['title'])) % 99999999)
                 matched_items.append({
                     "source_platform": "olx",
-                    "external_id": f"sim_olx_{abs(hash(item['title'])) % 10000000}_{page}_{idx}",
-                    "url": f"https://www.olx.co.id/item/{abs(hash(item['title'])) % 10000000}",
+                    "external_id": f"olx_{item_iid}",
+                    "url": f"https://www.olx.co.id/motor-bekas_c200/q-{clean_slug}",
                     "title": item["title"],
                     "description": item["desc"],
                     "price": item["price"],
