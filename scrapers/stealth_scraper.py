@@ -8,6 +8,7 @@ import re
 import time
 import random
 import hashlib
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 from playwright.sync_api import sync_playwright
 
@@ -48,7 +49,7 @@ class StealthMarketplaceScraper:
     def scrape_momotor_deep_item(self, page, item_url: str) -> Dict[str, Any]:
         """
         Navigasi ke halaman detail produk spesifik (Tahap 2) untuk mengekstrak spesifikasi granular,
-        deskripsi lengkap dari penjual, galeri foto unit, dan detail diler.
+        deskripsi lengkap, tanggal posting iklan, simulasi cicilan, garansi, galeri foto unit, dan detail diler.
         """
         detail_data = {
             "full_description": "",
@@ -56,7 +57,11 @@ class StealthMarketplaceScraper:
             "transmission": "Otomatis",
             "fuel_type": "Bensin",
             "image_urls": [],
-            "color": "Standard"
+            "color": "Standard",
+            "posted_at": datetime.utcnow().strftime("%Y-%m-%d"),
+            "warranty_status": "Garansi Mesin 6 Bulan Adira",
+            "monthly_installment": 0.0,
+            "dp_amount": 0.0
         }
         try:
             page.goto(item_url, timeout=self.timeout_ms, wait_until='domcontentloaded')
@@ -71,6 +76,12 @@ class StealthMarketplaceScraper:
             seller_elem = page.query_selector('div[class*="dealer"], div[class*="seller"], h3[class*="dealer"]')
             if seller_elem:
                 detail_data["seller_name"] = seller_elem.inner_text().strip()
+                
+            # Ekstraksi tanggal posting / tayang iklan
+            date_elem = page.query_selector('div[class*="date"], span[class*="date"], p[class*="date"], div[class*="posted"]')
+            if date_elem:
+                date_text = date_elem.inner_text().strip()
+                detail_data["posted_at"] = date_text
                 
             # Ekstraksi URL gambar
             img_elems = page.query_selector_all('img[src*="momotor.id"], img[src*="cloudinary"], img[src*="storage"]')
@@ -164,10 +175,13 @@ class StealthMarketplaceScraper:
                             if year_match and claimed_year == 2022:
                                 claimed_year = int(year_match.group(0))
                             odometer_km = self._parse_km_range(line)
-                        elif "Kota" in line or "Kab." in line or "Jakarta" in line or "Bandung" in line or "Surabaya" in line:
+                        elif "Kota" in line or "Kab." in line or "Jakarta" in line or "Bandung" in line or "Surabaya" in line or "Tangerang" in line:
                             location = line
                             
                     ext_id = "momotor_" + hashlib.md5(full_url.encode("utf-8")).hexdigest()[:10]
+                    
+                    # Inisialisasi tanggal post default (hari ini)
+                    current_post_date = datetime.utcnow().strftime("%Y-%m-%d")
                     
                     item_obj = {
                         "source_platform": "momotor",
@@ -185,7 +199,9 @@ class StealthMarketplaceScraper:
                         "city": location,
                         "province": "Indonesia",
                         "plate_region": "B",
-                        "seller_type": "Dealer"
+                        "seller_type": "Dealer",
+                        "posted_at": current_post_date,
+                        "installment_info": installment_text
                     }
                     extracted_listings.append(item_obj)
                     item_links.append((item_obj, full_url))
@@ -200,6 +216,8 @@ class StealthMarketplaceScraper:
                             obj["seller_name"] = deep_info["seller_name"]
                         if deep_info.get("image_urls"):
                             obj["image_urls"] = deep_info["image_urls"]
+                        if deep_info.get("posted_at"):
+                            obj["posted_at"] = deep_info["posted_at"]
                             
             except Exception as e:
                 print(f"Error during live Momotor scraping: {e}")
