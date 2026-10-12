@@ -1492,6 +1492,7 @@ elif menu == "Enterprise Vehicle History & Deal Alerts":
     </div>
     """, unsafe_allow_html=True)
 
+    db = get_db_session()
     tab_alert_sub, tab_veh_hist, tab_img_ai, tab_b2b_gate = st.tabs([
         "Deal Alerts & Price Drops",
         "Vehicle History & ETLE Lookup",
@@ -1730,6 +1731,7 @@ elif menu == "Enterprise Vehicle History & Deal Alerts":
                 st.dataframe(pd.DataFrame(l_data), use_container_width=True, hide_index=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
+    db.close()
 
 
 # ==============================================================================
