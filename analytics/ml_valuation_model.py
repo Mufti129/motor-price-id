@@ -205,12 +205,14 @@ class MLValuationModel:
     def forecast_residual_value_curve(
         self,
         current_fmv: float,
-        claimed_year: int,
-        engine_cc: int,
+        claimed_year: int = 2022,
+        engine_cc: int = 125,
         sector: str = "ICE Konvensional",
         msrp_new: Optional[float] = None,
         brand: Optional[str] = None,
         current_year: Optional[int] = None,
+        *args,
+        **kwargs
     ) -> List[Dict[str, Any]]:
         """
         Proyeksi nilai sisa 0/6/12/24/36 bulan.
@@ -218,6 +220,30 @@ class MLValuationModel:
         (prediksi rasio retensi pada usia +h dibanding usia sekarang), lalu diterapkan ke FMV saat ini.
         Jika tidak: laju tahunan parametrik per sektor.
         """
+        try:
+            current_fmv = float(current_fmv) if current_fmv is not None else 15_000_000.0
+        except (TypeError, ValueError):
+            current_fmv = 15_000_000.0
+
+        try:
+            claimed_year = int(claimed_year) if claimed_year is not None else 2022
+        except (TypeError, ValueError):
+            claimed_year = 2022
+
+        try:
+            engine_cc = int(engine_cc) if engine_cc is not None else 125
+        except (TypeError, ValueError):
+            engine_cc = 125
+
+        if msrp_new is not None:
+            try:
+                msrp_new = float(msrp_new)
+            except (TypeError, ValueError):
+                msrp_new = None
+
+        sector = str(sector or "ICE Konvensional")
+        brand = str(brand) if brand else None
+
         current_year = current_year or datetime.now().year
         horizons = [
             ("Saat Ini (Baseline)", 0), ("6 Bulan Mendatang", 6), ("12 Bulan (1 Tahun)", 12),
@@ -226,12 +252,17 @@ class MLValuationModel:
 
         use_model = False
         if self.is_trained_model and msrp_new:
-            now_pred = self.predict_valuation(msrp_new, claimed_year, engine_cc=engine_cc, brand=brand,
-                                              category=sector, current_year=current_year)
-            far_pred = self.predict_valuation(msrp_new, claimed_year - 4, engine_cc=engine_cc, brand=brand,
-                                              category=sector, current_year=current_year)
-            use_model = now_pred["is_trained_model"] and far_pred["is_trained_model"]
-            base_ret = now_pred["retention_ratio"]
+            try:
+                now_pred = self.predict_valuation(msrp_new, claimed_year, engine_cc=engine_cc, brand=brand,
+                                                  category=sector, current_year=current_year)
+                far_pred = self.predict_valuation(msrp_new, claimed_year - 4, engine_cc=engine_cc, brand=brand,
+                                                  category=sector, current_year=current_year)
+                use_model = bool(now_pred.get("is_trained_model") and far_pred.get("is_trained_model"))
+                base_ret = float(now_pred.get("retention_ratio", 1.0))
+            except Exception as e_pred:
+                logger.debug(f"Fallback forecast ke parametrik: {e_pred}")
+                use_model = False
+
         if not use_model:
             s = sector or ""
             annual = 0.055 if ("Moge" in s or "Retro" in s) else (0.095 if "EV" in s else 0.068)
@@ -240,15 +271,18 @@ class MLValuationModel:
         prev_factor = 1.0
         for label, months in horizons:
             if use_model and months > 0:
-                # Retensi pada usia lebih tua: geser tahun produksi mundur (interpolasi linear antar tahun)
-                yrs = months / 12.0
-                y_lo, frac = int(math.floor(yrs)), yrs - math.floor(yrs)
-                r_lo = self.predict_valuation(msrp_new, claimed_year - y_lo, engine_cc=engine_cc, brand=brand,
-                                              category=sector, current_year=current_year)["retention_ratio"]
-                r_hi = self.predict_valuation(msrp_new, claimed_year - y_lo - 1, engine_cc=engine_cc, brand=brand,
-                                              category=sector, current_year=current_year)["retention_ratio"]
-                factor = ((1 - frac) * r_lo + frac * r_hi) / base_ret if base_ret > 0 else 1.0
-                factor = min(prev_factor, factor)  # nilai sisa tidak boleh naik seiring waktu
+                try:
+                    # Retensi pada usia lebih tua: geser tahun produksi mundur (interpolasi linear antar tahun)
+                    yrs = months / 12.0
+                    y_lo, frac = int(math.floor(yrs)), yrs - math.floor(yrs)
+                    r_lo = float(self.predict_valuation(msrp_new, claimed_year - y_lo, engine_cc=engine_cc, brand=brand,
+                                                        category=sector, current_year=current_year).get("retention_ratio", 1.0))
+                    r_hi = float(self.predict_valuation(msrp_new, claimed_year - y_lo - 1, engine_cc=engine_cc, brand=brand,
+                                                        category=sector, current_year=current_year).get("retention_ratio", 1.0))
+                    factor = ((1 - frac) * r_lo + frac * r_hi) / base_ret if base_ret > 0 else 1.0
+                    factor = min(prev_factor, factor)  # nilai sisa tidak boleh naik seiring waktu
+                except Exception:
+                    factor = math.exp(-0.068 * months / 12.0)
             elif months > 0:
                 factor = math.exp(-annual * months / 12.0)
             else:

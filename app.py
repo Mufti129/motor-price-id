@@ -24,6 +24,17 @@ from pipeline.entity_matcher import EntityMatcher
 from pipeline.provenance import classify_origin
 from analytics.pricing_engine import PricingAnalyticsEngine
 from analytics.regional_index import REGIONAL_PRICE_INDEX, get_all_regions, apply_regional_pricing
+import importlib
+import sys
+
+# Memastikan modul analitik termutakhir saat runtime Streamlit Cloud me-reload tanpa cold restart
+for _mod in ["analytics.ml_valuation_model", "analytics.pricing_engine", "analytics.regional_index", "pipeline.scam_detector"]:
+    if _mod in sys.modules:
+        try:
+            importlib.reload(sys.modules[_mod])
+        except Exception:
+            pass
+
 from analytics.ml_valuation_model import ml_model_v6
 from analytics.certificate_generator import generate_pdf_certificate
 from analytics.alert_dispatcher import alert_dispatcher
@@ -883,14 +894,28 @@ elif menu == "Fair Market Value (FMV) Calculator":
                 with fmv_tab2:
                     st.markdown("#### Proyeksi Nilai Sisa Kendaraan (Residual Value Forecasting)")
 
-                    forecast_data = ml_model_v6.forecast_residual_value_curve(
-                        final_fmv,
-                        selected_year,
-                        model_obj.engine_capacity_cc if model_obj else 125,
-                        model_obj.category if model_obj else "Matic",
-                        msrp_new=msrp_val,
-                        brand=selected_brand
-                    )
+                    try:
+                        forecast_data = ml_model_v6.forecast_residual_value_curve(
+                            final_fmv,
+                            int(selected_year) if selected_year else 2022,
+                            int(model_obj.engine_capacity_cc) if (model_obj and model_obj.engine_capacity_cc) else 125,
+                            str(model_obj.category if (model_obj and model_obj.category) else "Matic"),
+                            msrp_new=float(msrp_val) if msrp_val else None,
+                            brand=str(selected_brand) if selected_brand else None
+                        )
+                    except TypeError:
+                        # Fallback kompatibilitas jika runtime server memegang signature versi lama (hanya 4 argumen)
+                        try:
+                            forecast_data = ml_model_v6.forecast_residual_value_curve(
+                                final_fmv,
+                                int(selected_year) if selected_year else 2022,
+                                int(model_obj.engine_capacity_cc) if (model_obj and model_obj.engine_capacity_cc) else 125,
+                                str(model_obj.category if (model_obj and model_obj.category) else "Matic")
+                            )
+                        except Exception:
+                            forecast_data = []
+                    except Exception:
+                        forecast_data = []
                     fc_method = forecast_data[0].get("method", "-") if forecast_data else "-"
                     st.caption(f"Prediksi harga pasar wajar untuk 6 bulan, 1, 2, dan 3 tahun ke depan. Metode: {fc_method}. Laju penyusutan diturunkan dari kurva retensi model ML yang dilatih pada listing live terverifikasi, diterapkan pada FMV saat ini.")
                     df_fc = pd.DataFrame(forecast_data).drop(columns=["method"], errors="ignore")
