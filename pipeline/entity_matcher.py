@@ -1,3 +1,4 @@
+import re
 from typing import Optional, List, Dict, Any, Tuple
 from rapidfuzz import fuzz
 from sqlalchemy.orm import Session
@@ -12,6 +13,42 @@ class EntityMatcher:
     def __init__(self, db_session: Session):
         self.db = db_session
         self._variants_cache = self._load_variants()
+
+    # Token generik yang tidak membedakan model satu dengan lainnya
+    GENERIC_TOKENS = {
+        "honda", "yamaha", "suzuki", "kawasaki", "vespa", "piaggio", "series", "new", "all",
+        "the", "and", "dan", "standard", "std", "motor", "matic", "sport", "classic", "edition",
+    }
+
+    @classmethod
+    def model_tokens(cls, model_name: str) -> List[str]:
+        raw = re.split(r"[^a-z0-9]+", (model_name or "").lower())
+        return [t for t in raw if t and t not in cls.GENERIC_TOKENS and (len(t) >= 3 or any(ch.isdigit() for ch in t))]
+
+    @classmethod
+    def title_mentions_model(cls, title: str, model_name: str, aliases: Optional[List[str]] = None) -> bool:
+        """True jika judul menyebut token khas model atau salah satu alias varian."""
+        t = (title or "").lower()
+        compact = re.sub(r"[^a-z0-9]", "", t)
+        tokens = cls.model_tokens(model_name)
+        for tok in tokens:
+            if tok in t or tok in compact:
+                return True
+        for alias in aliases or []:
+            a = alias.strip().lower()
+            if a and (a in t or re.sub(r"[^a-z0-9]", "", a) in compact):
+                return True
+        if not tokens:
+            # Nama model pendek (mis. 'LX', 'S'): cocokkan sebagai kata utuh.
+            short = [x for x in re.split(r"[^a-z0-9]+", (model_name or "").lower())
+                     if x and x not in cls.GENERIC_TOKENS]
+            short_2 = [x for x in short if len(x) >= 2]
+            if any(re.search(rf"\b{re.escape(x)}\b", t) for x in short_2):
+                return True
+            # Tidak ada token yang dapat diverifikasi -> jangan menolak
+            if not short_2:
+                return True
+        return False
 
     def _load_variants(self) -> List[Dict[str, Any]]:
         """Pre-cache master variants dengan metadata lengkap untuk pencocokan cepat."""
@@ -63,15 +100,10 @@ class EntityMatcher:
                 if not (item["start_year"] - 1 <= claimed_year <= item["end_year"] + 1):
                     continue
 
-            # 2. Cek apakah model name / brand name / alias ada dalam judul
-            model_keyword = item["model_name"].lower()
-            brand_keyword = item["brand_name"].lower().split()[0]
-            has_keyword = (
-                model_keyword in clean_title or
-                brand_keyword in clean_title or
-                any(alias in clean_title for alias in item["aliases_list"])
-            )
-            if not has_keyword:
+            # 2. Wajib ada token model / alias di judul.
+            #    Kata merek saja (mis. 'honda') TIDAK cukup, karena akan meloloskan seluruh
+            #    varian merek tersebut dan memicu salah-match (contoh: 'Honda Genio' -> EM1 e:).
+            if not self.title_mentions_model(clean_title, item["model_name"], item["aliases_list"]):
                 continue
 
             # 3. Hitung fuzzy match score dengan seluruh alias dan nama varian

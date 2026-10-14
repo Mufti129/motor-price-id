@@ -8,6 +8,9 @@ from models.catalog import (
     AuctionLot, WholesalePriceStats
 )
 
+# Listing yang dikarantina oleh data/sanitize_listings.py tidak boleh masuk perhitungan harga
+NOT_QUARANTINED = func.coalesce(ScrapedListing.status, "ACTIVE") != "QUARANTINED"
+
 try:
     import numpy as np
     def percentile(data, p):
@@ -51,7 +54,8 @@ class PricingAnalyticsEngine:
         query = self.db.query(ScrapedListing.price).filter(
             ScrapedListing.matched_variant_id == variant_id,
             ScrapedListing.is_dp_price == False,
-            ScrapedListing.price > 0
+            ScrapedListing.price > 0,
+            NOT_QUARANTINED
         )
 
         if year:
@@ -98,7 +102,8 @@ class PricingAnalyticsEngine:
         ).filter(
             ScrapedListing.matched_variant_id.isnot(None),
             ScrapedListing.claimed_year.isnot(None),
-            ScrapedListing.is_dp_price == False
+            ScrapedListing.is_dp_price == False,
+            NOT_QUARANTINED
         ).distinct().all()
 
         today = datetime.utcnow().date()
@@ -164,7 +169,8 @@ class PricingAnalyticsEngine:
             ScrapedListing.is_dp_price == False,
             ScrapedListing.has_bpkb == True,
             ScrapedListing.price > 0,
-            ScrapedListing.claimed_year.isnot(None)
+            ScrapedListing.claimed_year.isnot(None),
+            NOT_QUARANTINED
         ).all()
 
         for listing, variant, model, brand in active_listings:

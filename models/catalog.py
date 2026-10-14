@@ -87,7 +87,11 @@ class ScrapedListing(Base):
     # Timestamps
     posted_at = Column(DateTime, nullable=True)
     scraped_at = Column(DateTime, default=datetime.utcnow)
-    status = Column(String(20), default="ACTIVE")
+    status = Column(String(20), default="ACTIVE") # 'ACTIVE' | 'QUARANTINED' (anomali hasil sanitasi)
+
+    # Data Governance (Provenance & Quality Control)
+    data_origin = Column(String(20), nullable=True, index=True) # 'LIVE_SCRAPED' | 'SYNTHETIC'
+    quality_flag = Column(String(60), nullable=True) # Kode alasan karantina, e.g. 'PRICE_ABOVE_MSRP'
 
     __table_args__ = (
         UniqueConstraint("source_platform", "external_id", name="uq_source_external_id"),

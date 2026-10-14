@@ -72,5 +72,65 @@ class TestPipeline(unittest.TestCase):
         finally:
             db.close()
 
+    # ------------------------------------------------------------------
+    # Regresi untuk perbaikan prioritas pertama (audit data 2026-10)
+    # ------------------------------------------------------------------
+    def test_detector_closes_low_price_loophole(self):
+        # Sebelumnya lolos sebagai Cash karena tanpa kata kunci DP dan tanpa MSRP
+        res = ScamAndDPDetector.evaluate(price=1_500_000, title="Honda Revo 2015 mulus", description="")
+        self.assertTrue(res["is_invalid"])
+        self.assertEqual(res["code"], "PRICE_BELOW_MIN")
+        is_dp, _ = ScamAndDPDetector.is_dp_or_credit_listing(1_500_000, "Honda Revo 2015 mulus", "")
+        self.assertTrue(is_dp)
+
+    def test_detector_absurd_and_above_msrp(self):
+        res = ScamAndDPDetector.evaluate(price=81_234_546_787, title="Honda Beat 2020 hub 0812345", description="")
+        self.assertEqual(res["code"], "PRICE_ABSURD")
+        res2 = ScamAndDPDetector.evaluate(price=45_000_000, title="Honda Beat 2020", description="",
+                                          expected_market_msrp=18_000_000, claimed_year=2020)
+        self.assertEqual(res2["code"], "PRICE_ABOVE_MSRP")
+
+    def test_detector_age_floor(self):
+        # Unit usia 1 tahun dengan harga 30% MSRP -> di bawah batas retensi wajar
+        res = ScamAndDPDetector.evaluate(price=9_000_000, title="Yamaha NMAX 2025", description="",
+                                         expected_market_msrp=31_000_000, claimed_year=2025, current_year=2026)
+        self.assertTrue(res["is_invalid"])
+        # Unit usia 8 tahun dengan harga 55% MSRP -> valid
+        res2 = ScamAndDPDetector.evaluate(price=17_000_000, title="Yamaha NMAX 2018", description="",
+                                          expected_market_msrp=31_000_000, claimed_year=2018, current_year=2026)
+        self.assertFalse(res2["is_invalid"])
+
+    def test_provenance_classification(self):
+        from pipeline.provenance import classify_origin
+        self.assertEqual(classify_origin("gen_000123", "https://www.olx.co.id/item/x"), "SYNTHETIC")
+        self.assertEqual(classify_origin("olx_exp_55", None), "SYNTHETIC")
+        self.assertEqual(classify_origin("olx_912345678", "https://www.olx.co.id/motor-bekas_c200/q-honda-beat"), "SYNTHETIC")
+        self.assertEqual(classify_origin("fb_1", "https://www.facebook.com/marketplace/item/123456789/"), "LIVE_SCRAPED")
+        self.assertEqual(classify_origin("mm_1", "https://momotor.id/motor-bekas/honda/beat-2020-abc"), "LIVE_SCRAPED")
+
+    def test_entity_gate_requires_model_mention(self):
+        from pipeline.entity_matcher import EntityMatcher
+        self.assertTrue(EntityMatcher.title_mentions_model("Honda Genio 2021 mulus", "Genio"))
+        self.assertFalse(EntityMatcher.title_mentions_model("Honda Genio 2021 mulus", "EM1 e:"))
+        self.assertFalse(EntityMatcher.title_mentions_model("Yamaha NMAX 155 2019", "WR 155R"))
+
+    def test_ml_model_monotonic_depreciation(self):
+        from analytics.ml_valuation_model import MLValuationModel
+        m = MLValuationModel()
+        if not m.is_trained_model:
+            self.skipTest("Artefak model tidak tersedia")
+        prices = [m.predict_valuation(18_500_000, y, engine_cc=110, brand="Honda", category="MATIC",
+                                      current_year=2026)["predicted_fmv"] for y in range(2024, 2012, -1)]
+        for newer, older in zip(prices, prices[1:]):
+            self.assertGreaterEqual(newer + 1, older)
+        curve = m.forecast_residual_value_curve(12_000_000, 2019, 110, sector="MATIC",
+                                                msrp_new=18_500_000, brand="Honda", current_year=2026)
+        self.assertEqual(len(curve), 5)
+        vals = [pt["forecasted_price"] for pt in curve]
+        for a, b in zip(vals, vals[1:]):
+            self.assertGreaterEqual(a, b)
+        self.assertTrue(all("method" in pt for pt in curve))
+
+
 if __name__ == "__main__":
     unittest.main()

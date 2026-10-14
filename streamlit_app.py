@@ -21,6 +21,7 @@ from scrapers.stealth_scraper import StealthMarketplaceScraper
 from pipeline.normalizer import ListingNormalizer
 from pipeline.scam_detector import ScamAndDPDetector
 from pipeline.entity_matcher import EntityMatcher
+from pipeline.provenance import classify_origin
 from analytics.pricing_engine import PricingAnalyticsEngine
 from analytics.regional_index import REGIONAL_PRICE_INDEX, get_all_regions, apply_regional_pricing
 from analytics.ml_valuation_model import ml_model_v6
@@ -412,6 +413,9 @@ def load_all_listings_df() -> pd.DataFrame:
             ScrapedListing.city,
             ScrapedListing.seller_type,
             ScrapedListing.posted_at,
+            ScrapedListing.status,
+            ScrapedListing.data_origin,
+            ScrapedListing.quality_flag,
             MasterBrand.name.label("brand_name"),
             MasterModel.name.label("model_name"),
             MasterVariant.variant_name,
@@ -439,8 +443,15 @@ def load_all_listings_df() -> pd.DataFrame:
         if not results:
             return pd.DataFrame()
 
+        from pipeline.provenance import classify_origin
         records = []
         for r in results:
+            if (r.status or "ACTIVE") == "QUARANTINED":
+                price_type = "Anomali (Karantina)"
+            elif r.is_dp_price:
+                price_type = "DP / Clickbait"
+            else:
+                price_type = "Cash"
             records.append({
                 "ID": r.id,
                 "Platform": r.source_platform.upper(),
@@ -450,7 +461,7 @@ def load_all_listings_df() -> pd.DataFrame:
                 "Variant": r.variant_name if r.variant_name else "Unmatched",
                 "Year": r.claimed_year,
                 "Price": float(r.price),
-                "Price_Type": "DP / Clickbait" if r.is_dp_price else "Cash",
+                "Price_Type": price_type,
                 "Mileage_KM": r.odometer_km,
                 "Tax_Status": r.tax_status or "Unknown",
                 "BPKB": "Lengkap" if r.has_bpkb else "Tidak Ada",
@@ -460,7 +471,9 @@ def load_all_listings_df() -> pd.DataFrame:
                 "Seller_Type": r.seller_type or "Individual",
                 "MSRP_New": float(r.official_msrp_new) if r.official_msrp_new else None,
                 "URL": r.url,
-                "Posted_At": r.posted_at
+                "Posted_At": r.posted_at,
+                "Data_Origin": r.data_origin or classify_origin(r.external_id, r.url),
+                "Quality_Flag": r.quality_flag or "-"
             })
         return pd.DataFrame(records)
     except Exception as e:
@@ -850,7 +863,7 @@ elif menu == "Fair Market Value (FMV) Calculator":
                 # Sub-Tabs for FMV Deep Intelligence
                 fmv_tab1, fmv_tab2, fmv_tab3 = st.tabs([
                     "1. Rincian Penyesuaian Hedonik & Regional",
-                    "2. Proyeksi Depresiasi Masa Depan (Model Versi 6)",
+                    "2. Proyeksi Depresiasi Masa Depan (Model ML)",
                     "3. Unduh Sertifikat Valuasi Resmi (PDF)"
                 ])
 
@@ -868,16 +881,19 @@ elif menu == "Fair Market Value (FMV) Calculator":
                     """, unsafe_allow_html=True)
 
                 with fmv_tab2:
-                    st.markdown("#### Proyeksi Nilai Sisa Kendaraan (Residual Value Forecasting - Model Versi 6)")
-                    st.caption("Prediksi harga pasar wajar motor ini untuk 6 bulan, 1 tahun, 2 tahun, dan 3 tahun ke depan menggunakan algoritma Ensemble Hedonic Regression v6.2.")
+                    st.markdown("#### Proyeksi Nilai Sisa Kendaraan (Residual Value Forecasting)")
 
                     forecast_data = ml_model_v6.forecast_residual_value_curve(
                         final_fmv,
                         selected_year,
                         model_obj.engine_capacity_cc if model_obj else 125,
-                        model_obj.category if model_obj else "Matic"
+                        model_obj.category if model_obj else "Matic",
+                        msrp_new=msrp_val,
+                        brand=selected_brand
                     )
-                    df_fc = pd.DataFrame(forecast_data)
+                    fc_method = forecast_data[0].get("method", "-") if forecast_data else "-"
+                    st.caption(f"Prediksi harga pasar wajar untuk 6 bulan, 1, 2, dan 3 tahun ke depan. Metode: {fc_method}. Laju penyusutan diturunkan dari kurva retensi model ML yang dilatih pada listing live terverifikasi, diterapkan pada FMV saat ini.")
+                    df_fc = pd.DataFrame(forecast_data).drop(columns=["method"], errors="ignore")
 
                     fig_fc = px.line(
                         df_fc,
@@ -1609,6 +1625,13 @@ elif menu == "Enterprise Vehicle History & Deal Alerts":
                 MasterBrand, MasterModel.brand_id == MasterBrand.id
             ).filter(
                 ScrapedListing.is_dp_price == False,
+                func.coalesce(ScrapedListing.status, "ACTIVE") != "QUARANTINED",
+                # Hanya iklan riil dengan URL yang dapat dibuka/diverifikasi (bukan data sintetis)
+                ScrapedListing.data_origin == "LIVE_SCRAPED",
+                # Median pembanding minimal dari 3 listing agar klaim undervalued bermakna statistik
+                MarketPriceStats.sample_count >= 3,
+                # Hanya snapshot statistik terbaru (hindari baris ganda & statistik usang pra-sanitasi)
+                MarketPriceStats.stat_date == db.query(func.max(MarketPriceStats.stat_date)).scalar_subquery(),
                 ScrapedListing.price >= 3000000,
                 ScrapedListing.price < MarketPriceStats.price_median * 0.90
             ).order_by(
@@ -1941,15 +1964,17 @@ elif menu == "Raw Scraped Dataset Explorer":
         st.info("Dataset mentah masih kosong.")
     else:
         st.markdown('<div class="content-panel"><div class="panel-header">Granular Filters & Search</div>', unsafe_allow_html=True)
-        f1, f2, f3, f4 = st.columns(4)
+        f1, f2, f3, f4, f5 = st.columns(5)
         with f1:
             search_kw = st.text_input("Search Keyword / Title", "")
         with f2:
             brand_filter = st.multiselect("Manufacturer Brand", options=sorted(df_raw["Brand"].unique()), default=[])
         with f3:
-            price_type_filter = st.selectbox("Pricing Category", ["All Listings", "Cash Only", "DP / Clickbait Only"])
+            price_type_filter = st.selectbox("Pricing Category", ["All Listings", "Cash Only", "DP / Clickbait Only", "Anomali (Karantina) Only"])
         with f4:
             tax_filter = st.multiselect("Tax Status", options=sorted(df_raw["Tax_Status"].unique()), default=[])
+        with f5:
+            origin_filter = st.selectbox("Data Provenance", ["All Origins", "LIVE_SCRAPED Only", "SYNTHETIC Only"])
         st.markdown('</div>', unsafe_allow_html=True)
 
         filtered = df_raw.copy()
@@ -1961,6 +1986,12 @@ elif menu == "Raw Scraped Dataset Explorer":
             filtered = filtered[filtered["Price_Type"] == "Cash"]
         elif price_type_filter == "DP / Clickbait Only":
             filtered = filtered[filtered["Price_Type"] == "DP / Clickbait"]
+        elif price_type_filter == "Anomali (Karantina) Only":
+            filtered = filtered[filtered["Price_Type"] == "Anomali (Karantina)"]
+        if origin_filter == "LIVE_SCRAPED Only":
+            filtered = filtered[filtered["Data_Origin"] == "LIVE_SCRAPED"]
+        elif origin_filter == "SYNTHETIC Only":
+            filtered = filtered[filtered["Data_Origin"] == "SYNTHETIC"]
         if tax_filter:
             filtered = filtered[filtered["Tax_Status"].isin(tax_filter)]
 
@@ -1980,7 +2011,8 @@ elif menu == "Raw Scraped Dataset Explorer":
         st.dataframe(
             filtered[[
                 "ID", "Platform", "Title", "Brand", "Model", "Variant", "Year",
-                "Price", "Price_Type", "Mileage_KM", "Tax_Status", "BPKB", "City", "URL"
+                "Price", "Price_Type", "Data_Origin", "Quality_Flag",
+                "Mileage_KM", "Tax_Status", "BPKB", "City", "URL"
             ]],
             column_config={
                 "Price": st.column_config.NumberColumn(format="Rp %,.0f"),
@@ -2127,7 +2159,9 @@ elif menu == "Live Scraper & Crawler Center":
                                 district=norm["district"],
                                 seller_name=norm["seller_name"],
                                 seller_type=norm["seller_type"],
-                                posted_at=datetime.utcnow()
+                                posted_at=datetime.utcnow(),
+                                status="ACTIVE",
+                                data_origin=classify_origin(norm["external_id"], norm["url"])
                             )
                             db.add(listing_obj)
                             added_count += 1
@@ -2295,7 +2329,7 @@ elif menu == "System Documentation & Methodology":
     tab_arch, tab_math, tab_ml_eval, tab_regional, tab_api, tab_dict, tab_cat = st.tabs([
         "1. Architecture & Background",
         "2. Econometric & Valuation Models",
-        "3. Evaluasi & Training Model Versi 6",
+        "3. Evaluasi & Training Model ML",
         "4. Indeks Disparitas Multi-Wilayah",
         "5. Layanan REST API B2B Enterprise",
         "6. Data Dictionary & Parameters",
@@ -2317,8 +2351,8 @@ elif menu == "System Documentation & Methodology":
         **Alur Kerja Sistem (5 Tahap Utama):**
         1. **Data Harvesting & Multi-Source Scraping:** Mengambil data listing mentah secara otomatis dari OLX Indonesia, Facebook Marketplace, Momotor, serta balai lelang JBA Indonesia dan IBID - Astra.
         2. **AI & NLP Data Cleansing Pipeline:** Membersihkan teks, mengekstraksi jarak tempuh KM dan status pajak, mendeteksi flag DP/Kredit semu, dan melakukan *Entity Resolution* fuzzy matching.
-        3. **Relational Database Layer (SQLite ORM):** Menyimpan master katalog 12 tahun (2014–2026), 17.000 listing retail, 5.866 lot lelang, dan 5.501 ringkasan statistik wholesale.
-        4. **Econometric & ML Pricing Engine (Model Versi 6):** Menghitung Fair Market Value (FMV), kuartil harga (Min, P25, Median, P75, Max), koreksi multi-wilayah, dan kurva proyeksi nilai sisa 36 bulan.
+        3. **Relational Database Layer (SQLite ORM):** Menyimpan master katalog 12 tahun (2014–2026), listing retail dengan label asal data (LIVE_SCRAPED / SYNTHETIC) dan status karantina hasil sanitasi, serta data lot lelang dan ringkasan statistik wholesale.
+        4. **Econometric & ML Pricing Engine (HistGradientBoosting terlatih):** Menghitung Fair Market Value (FMV), kuartil harga (Min, P25, Median, P75, Max), koreksi multi-wilayah, dan kurva proyeksi nilai sisa 36 bulan.
         5. **Enterprise Streamlit User Interface & REST API:** Menyajikan visualisasi interaktif fintech-grade serta endpoint API untuk integrasi perbankan/multifinance.
         """)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -2391,74 +2425,102 @@ elif menu == "System Documentation & Methodology":
         st.markdown('</div>', unsafe_allow_html=True)
 
     with tab_ml_eval:
-        st.markdown('<div class="content-panel"><div class="panel-header">Evaluasi & Performa Training Model Versi 6 (v6.2.4-Enterprise)</div>', unsafe_allow_html=True)
-        
         eval_m = ml_model_v6.evaluation_metrics
-        
-        st.markdown(f"""
-        <div class="info-box-purple">
-            <div class="info-box-title">Spesifikasi Arsitektur Model Machine Learning Versi 6</div>
-            <div class="info-box-desc">
-                <strong>Arsitektur:</strong> {eval_m['architecture']}<br>
-                <strong>Dataset Training:</strong> {eval_m['training_samples']:,} data latih (80%) + {eval_m['test_samples']:,} data uji (20%) = Total <strong>{ml_model_v6.dataset_size:,} listing terverifikasi</strong>.<br>
-                <strong>Tanggal Rilis:</strong> {ml_model_v6.trained_date} | Durasi Training: {eval_m['training_duration_seconds']} detik.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="content-panel"><div class="panel-header">Evaluasi & Performa Training Model ML ({eval_m.get("model_version", "-")})</div>', unsafe_allow_html=True)
 
-        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-        with m_col1:
+        if not ml_model_v6.is_trained_model or eval_m.get("r2_score") is None:
+            st.warning(f"Model ML terlatih belum tersedia. Sistem memakai formula depresiasi parametrik. Detail: {ml_model_v6.load_error or 'jalankan python3 analytics/train_valuation_model.py'}")
+        else:
+            def _fmt(v, pattern):
+                return pattern.format(v) if v is not None else "-"
+
+            origin_txt = ", ".join(f"{k}: {v:,}" for k, v in eval_m.get("dataset_origin_counts", {}).items())
+            dropped = eval_m.get("dropped_features", {})
+            dropped_txt = "; ".join(f"{k} ({v})" for k, v in dropped.items()) or "-"
             st.markdown(f"""
-            <div class="pro-metric-card emerald">
-                <div class="pro-metric-label">R-Squared (R2)</div>
-                <div class="pro-metric-val">{eval_m['r2_score']:.4f}</div>
-                <div class="pro-metric-sub">Akurasi Prediksi 94.28%</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with m_col2:
-            st.markdown(f"""
-            <div class="pro-metric-card" style="border-color: #38bdf8;">
-                <div class="pro-metric-label">Mean Absolute Error</div>
-                <div class="pro-metric-val" style="color: #38bdf8; font-size: 1.25rem;">Rp {eval_m['mae_idr']:,.0f}</div>
-                <div class="pro-metric-sub">Rata-rata selisih prediksi</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with m_col3:
-            st.markdown(f"""
-            <div class="pro-metric-card amber">
-                <div class="pro-metric-label">MAPE (%)</div>
-                <div class="pro-metric-val">{eval_m['mape_pct']:.2f}%</div>
-                <div class="pro-metric-sub">Error persentase sangat rendah</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with m_col4:
-            st.markdown(f"""
-            <div class="pro-metric-card" style="border-color: #a855f7;">
-                <div class="pro-metric-label">5-Fold CV Score</div>
-                <div class="pro-metric-val" style="color: #a855f7;">{eval_m['cross_val_kfold_mean_r2']:.4f}</div>
-                <div class="pro-metric-sub">Stabilitas generalisasi data</div>
+            <div class="info-box-purple">
+                <div class="info-box-title">Spesifikasi Model (dihitung otomatis dari hasil training riil)</div>
+                <div class="info-box-desc">
+                    <strong>Arsitektur:</strong> {eval_m['architecture']}<br>
+                    <strong>Target:</strong> log(harga / MSRP baru), dengan batasan monoton: retensi nilai tidak boleh naik seiring usia.<br>
+                    <strong>Cakupan Data:</strong> scope <code>{eval_m.get('data_scope')}</code> &mdash; {origin_txt} (listing cash, lolos sanitasi, bukan DP).<br>
+                    <strong>Pembagian:</strong> {eval_m['training_samples']:,} data latih (80%) + {eval_m['test_samples']:,} data uji (20%) = {ml_model_v6.dataset_size:,} listing.<br>
+                    <strong>Fitur aktif:</strong> {", ".join(eval_m.get('active_features', []))}<br>
+                    <strong>Fitur tidak dipakai (data tidak informatif):</strong> {dropped_txt}<br>
+                    <strong>Dilatih:</strong> {ml_model_v6.trained_date} | scikit-learn {eval_m.get('sklearn_version', '-')} | Durasi {eval_m['training_duration_seconds']} detik.
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown("#### Feature Importance (Bobot Pengaruh Variabel terhadap Harga Motor Bekas)")
-        df_feat = pd.DataFrame([
-            {"Fitur / Variabel": k, "Bobot Pengaruh": v, "Persentase": f"{v*100:.1f}%"}
-            for k, v in eval_m["feature_importance"].items()
-        ]).sort_values("Bobot Pengaruh", ascending=True)
+            m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+            with m_col1:
+                st.markdown(f"""
+                <div class="pro-metric-card emerald">
+                    <div class="pro-metric-label">R-Squared (Hold-out)</div>
+                    <div class="pro-metric-val">{_fmt(eval_m.get('r2_score'), '{:.4f}')}</div>
+                    <div class="pro-metric-sub">Variansi harga yang dijelaskan model</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m_col2:
+                st.markdown(f"""
+                <div class="pro-metric-card" style="border-color: #38bdf8;">
+                    <div class="pro-metric-label">Mean Absolute Error</div>
+                    <div class="pro-metric-val" style="color: #38bdf8; font-size: 1.25rem;">Rp {_fmt(eval_m.get('mae_idr'), '{:,.0f}')}</div>
+                    <div class="pro-metric-sub">Rata-rata selisih prediksi vs harga iklan</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m_col3:
+                st.markdown(f"""
+                <div class="pro-metric-card amber">
+                    <div class="pro-metric-label">MAPE / Median APE</div>
+                    <div class="pro-metric-val">{_fmt(eval_m.get('mape_pct'), '{:.2f}')}%</div>
+                    <div class="pro-metric-sub">Median APE {_fmt(eval_m.get('median_ape_pct'), '{:.2f}')}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with m_col4:
+                st.markdown(f"""
+                <div class="pro-metric-card" style="border-color: #a855f7;">
+                    <div class="pro-metric-label">5-Fold CV R2</div>
+                    <div class="pro-metric-val" style="color: #a855f7;">{_fmt(eval_m.get('cross_val_kfold_mean_r2'), '{:.4f}')}</div>
+                    <div class="pro-metric-sub">Std {_fmt(eval_m.get('cross_val_kfold_std_r2'), '{:.4f}')} | CV MAPE {_fmt(eval_m.get('cross_val_kfold_mean_mape_pct'), '{:.2f}')}%</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-        fig_feat = px.bar(
-            df_feat,
-            x="Bobot Pengaruh",
-            y="Fitur / Variabel",
-            orientation="h",
-            color="Bobot Pengaruh",
-            color_continuous_scale="Teal",
-            text="Persentase"
-        )
-        fig_feat.update_traces(textposition="outside")
-        fig_feat = format_dark_chart(fig_feat, show_legend=False, x_title="Relative Feature Importance")
-        fig_feat.update_layout(height=340)
-        st.plotly_chart(fig_feat, use_container_width=True)
+            base = eval_m.get("baseline_age_median", {})
+            st.markdown("#### Perbandingan terhadap Baseline Non-ML (median retensi per usia)")
+            st.dataframe(pd.DataFrame([
+                {"Metode": "Model ML (HGB)", "R2": eval_m.get("r2_score"), "MAE (Rp)": eval_m.get("mae_idr"),
+                 "RMSE (Rp)": eval_m.get("rmse_idr"), "MAPE (%)": eval_m.get("mape_pct")},
+                {"Metode": "Baseline median per usia", "R2": base.get("r2_score"), "MAE (Rp)": base.get("mae_idr"),
+                 "RMSE (Rp)": base.get("rmse_idr"), "MAPE (%)": base.get("mape_pct")},
+            ]), column_config={
+                "R2": st.column_config.NumberColumn(format="%.4f"),
+                "MAE (Rp)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                "RMSE (Rp)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                "MAPE (%)": st.column_config.NumberColumn(format="%.2f"),
+            }, hide_index=True, use_container_width=True)
+            st.caption(f"Cakupan interval prediksi P25-P75 pada data uji: {_fmt(eval_m.get('interval_p25_p75_coverage_pct'), '{:.1f}')}% (nilai ideal 50%).")
+
+            st.markdown("#### Feature Importance (Permutation Importance pada Data Uji)")
+            if eval_m.get("feature_importance"):
+                df_feat = pd.DataFrame([
+                    {"Fitur / Variabel": k, "Bobot Pengaruh": v, "Persentase": f"{v*100:.1f}%"}
+                    for k, v in eval_m["feature_importance"].items()
+                ]).sort_values("Bobot Pengaruh", ascending=True)
+
+                fig_feat = px.bar(
+                    df_feat,
+                    x="Bobot Pengaruh",
+                    y="Fitur / Variabel",
+                    orientation="h",
+                    color="Bobot Pengaruh",
+                    color_continuous_scale="Teal",
+                    text="Persentase"
+                )
+                fig_feat.update_traces(textposition="outside")
+                fig_feat = format_dark_chart(fig_feat, show_legend=False, x_title="Relative Feature Importance")
+                fig_feat.update_layout(height=340)
+                st.plotly_chart(fig_feat, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with tab_regional:
@@ -2560,7 +2622,9 @@ elif menu == "System Documentation & Methodology":
             {"Parameter": "Engine_CC", "Tipe": "Integer", "Definisi": "Kapasitas ruang bakar mesin dalam CC (110–1800cc) atau 0cc untuk EV Electric."},
             {"Parameter": "Year", "Tipe": "Integer", "Definisi": "Tahun pembuatan kendaraan (2014–2026)."},
             {"Parameter": "Price", "Tipe": "Numeric", "Definisi": "Harga riil transaksi tunai (IDR)."},
-            {"Parameter": "Price_Type", "Tipe": "String", "Definisi": "Klasifikasi validitas harga (Cash vs DP / Clickbait)."},
+            {"Parameter": "Price_Type", "Tipe": "String", "Definisi": "Klasifikasi validitas harga: Cash (harga tunai valid), DP / Clickbait (uang muka atau harga pancingan), Anomali (Karantina) (listing yang dikarantina oleh proses sanitasi dan dikecualikan dari seluruh kalkulasi FMV, statistik, dan pelatihan model)."},
+            {"Parameter": "Data_Origin", "Tipe": "String", "Definisi": "Provenance (asal-usul) data. LIVE_SCRAPED = diambil langsung dari halaman item marketplace (URL dapat diverifikasi). SYNTHETIC = baris hasil generator/ekspansi dataset atau fallback scraper; tidak mewakili listing riil dan tidak dipakai untuk melatih model ML."},
+            {"Parameter": "Quality_Flag", "Tipe": "String", "Definisi": "Kode alasan karantina dari sanitizer: ENTITY_MISMATCH (judul tidak menyebut model yang dicocokkan), PRICE_* (aturan harga detektor DP/anomali, mis. PRICE_BELOW_AGE_FLOOR, PRICE_ABOVE_MSRP), YEAR_INCONSISTENT, DUPLICATE_EXACT, STAT_OUTLIER_MAD (|robust z| > 3.5 dalam grup varian-tahun). Bernilai '-' bila listing lolos seluruh pemeriksaan."},
             {"Parameter": "Mileage_KM", "Tipe": "Integer", "Definisi": "Jarak tempuh odometer kendaraan (KM)."},
             {"Parameter": "Tax_Status", "Tipe": "String", "Definisi": "Status legalitas pajak (Hidup / Panjang, Mati / Off, Unknown)."},
             {"Parameter": "BPKB & STNK", "Tipe": "Boolean", "Definisi": "Kelengkapan dokumen fisik kepemilikan kendaraan."},

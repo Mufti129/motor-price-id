@@ -1,0 +1,71 @@
+{
+  "model_version": "v7.0.0-HGB",
+  "architecture": "HistGradientBoostingRegressor (target log harga/MSRP) + Quantile HGB P25/P75",
+  "trained_at": "2026-10-14 09:57:08",
+  "sklearn_version": "1.9.1",
+  "data_scope": "live",
+  "dataset_size": 773,
+  "dataset_origin_counts": {
+    "LIVE_SCRAPED": 773
+  },
+  "training_samples": 618,
+  "test_samples": 155,
+  "r2_score": 0.947,
+  "mae_idr": 2120504.1261,
+  "rmse_idr": 2958027.8279,
+  "mape_pct": 10.4116,
+  "median_ape_pct": 7.4702,
+  "baseline_age_median": {
+    "r2_score": 0.9191,
+    "mae_idr": 2831284.0077,
+    "rmse_idr": 3654689.1318,
+    "mape_pct": 14.5192,
+    "median_ape_pct": 9.2132
+  },
+  "cross_val_kfold_mean_r2": 0.9522,
+  "cross_val_kfold_std_r2": 0.0095,
+  "cross_val_kfold_mean_mape_pct": 9.2424,
+  "interval_p25_p75_coverage_pct": 41.29,
+  "training_duration_seconds": 314.84,
+  "feature_importance": {
+    "Usia Unit (Tahun)": 0.6041,
+    "Kapasitas Mesin (CC)": 0.0592,
+    "Merek (Brand)": 0.0868,
+    "Segmen Kendaraan": 0.2498
+  },
+  "active_features": [
+    "Usia Unit (Tahun)",
+    "Kapasitas Mesin (CC)",
+    "Merek (Brand)",
+    "Segmen Kendaraan"
+  ],
+  "dropped_features": {
+    "Jarak Tempuh Odometer (KM)": "99.9% kosong",
+    "Motor Listrik (EV)": "nilai konstan",
+    "Status Legalitas BPKB": "nilai konstan",
+    "Pajak STNK Mati": "nilai konstan",
+    "Status Pajak Tidak Diketahui": "hampir konstan (99.7% bernilai sama)"
+  },
+  "n_brands": 5,
+  "n_variants_unique_msrp": 53,
+  "reference_year": 2026,
+  "training_domain": {
+    "brands": [
+      "Honda",
+      "Kawasaki",
+      "Suzuki",
+      "Vespa (Piaggio)",
+      "Yamaha"
+    ],
+    "segments": [
+      "BEBEK_OTHER",
+      "MATIC",
+      "MAXI",
+      "RETRO_CLASSIC",
+      "SPORT",
+      "TRAIL_ADV"
+    ],
+    "age_min": 0,
+    "age_max": 15
+  }
+}

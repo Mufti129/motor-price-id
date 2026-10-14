@@ -79,6 +79,14 @@ def init_db():
                 cols_v = [r[1] for r in c.fetchall()]
                 if cols_v and "image_url" not in cols_v:
                     c.execute("ALTER TABLE master_variants ADD COLUMN image_url TEXT")
+
+                # Kolom tata kelola data (provenance & karantina anomali)
+                c.execute("PRAGMA table_info(scraped_listings)")
+                cols_s = [r[1] for r in c.fetchall()]
+                if cols_s and "data_origin" not in cols_s:
+                    c.execute("ALTER TABLE scraped_listings ADD COLUMN data_origin VARCHAR(20)")
+                if cols_s and "quality_flag" not in cols_s:
+                    c.execute("ALTER TABLE scraped_listings ADD COLUMN quality_flag VARCHAR(60)")
                     
                 conn.commit()
                 conn.close()
