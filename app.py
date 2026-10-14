@@ -371,8 +371,17 @@ def ensure_database_initialized():
             populate_all_images()
         except Exception:
             pass
-    except Exception:
-        seed_master_motor_database()
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        import logging
+        logging.getLogger("app").warning("Database initialization notice: %s", str(e))
+        try:
+            seed_master_motor_database()
+        except Exception:
+            pass
     finally:
         db.close()
 
@@ -385,7 +394,7 @@ def get_db_session() -> Session:
 def load_all_listings_df() -> pd.DataFrame:
     db = get_db_session()
     try:
-        results = db.query(
+        query_cols = (
             ScrapedListing.id,
             ScrapedListing.source_platform,
             ScrapedListing.external_id,
@@ -407,13 +416,25 @@ def load_all_listings_df() -> pd.DataFrame:
             MasterModel.name.label("model_name"),
             MasterVariant.variant_name,
             MasterVariant.official_msrp_new
-        ).outerjoin(
-            MasterVariant, ScrapedListing.matched_variant_id == MasterVariant.id
-        ).outerjoin(
-            MasterModel, MasterVariant.model_id == MasterModel.id
-        ).outerjoin(
-            MasterBrand, MasterModel.brand_id == MasterBrand.id
-        ).all()
+        )
+        try:
+            results = db.query(*query_cols).outerjoin(
+                MasterVariant, ScrapedListing.matched_variant_id == MasterVariant.id
+            ).outerjoin(
+                MasterModel, MasterVariant.model_id == MasterModel.id
+            ).outerjoin(
+                MasterBrand, MasterModel.brand_id == MasterBrand.id
+            ).all()
+        except Exception:
+            db.rollback()
+            init_db()
+            results = db.query(*query_cols).outerjoin(
+                MasterVariant, ScrapedListing.matched_variant_id == MasterVariant.id
+            ).outerjoin(
+                MasterModel, MasterVariant.model_id == MasterModel.id
+            ).outerjoin(
+                MasterBrand, MasterModel.brand_id == MasterBrand.id
+            ).all()
 
         if not results:
             return pd.DataFrame()
@@ -442,6 +463,10 @@ def load_all_listings_df() -> pd.DataFrame:
                 "Posted_At": r.posted_at
             })
         return pd.DataFrame(records)
+    except Exception as e:
+        import logging
+        logging.getLogger("app").error("Failed to load scraped listings: %s", str(e))
+        return pd.DataFrame()
     finally:
         db.close()
 
@@ -449,7 +474,7 @@ def load_all_listings_df() -> pd.DataFrame:
 def load_all_auction_lots_df() -> pd.DataFrame:
     db = get_db_session()
     try:
-        results = db.query(
+        query_cols = (
             AuctionLot.id,
             AuctionLot.source_platform,
             AuctionLot.lot_number,
@@ -479,13 +504,25 @@ def load_all_auction_lots_df() -> pd.DataFrame:
             MasterBrand.name.label("brand_name"),
             MasterModel.name.label("model_name"),
             MasterVariant.variant_name
-        ).outerjoin(
-            MasterVariant, AuctionLot.matched_variant_id == MasterVariant.id
-        ).outerjoin(
-            MasterModel, MasterVariant.model_id == MasterModel.id
-        ).outerjoin(
-            MasterBrand, MasterModel.brand_id == MasterBrand.id
-        ).all()
+        )
+        try:
+            results = db.query(*query_cols).outerjoin(
+                MasterVariant, AuctionLot.matched_variant_id == MasterVariant.id
+            ).outerjoin(
+                MasterModel, MasterVariant.model_id == MasterModel.id
+            ).outerjoin(
+                MasterBrand, MasterModel.brand_id == MasterBrand.id
+            ).all()
+        except Exception:
+            db.rollback()
+            init_db()
+            results = db.query(*query_cols).outerjoin(
+                MasterVariant, AuctionLot.matched_variant_id == MasterVariant.id
+            ).outerjoin(
+                MasterModel, MasterVariant.model_id == MasterModel.id
+            ).outerjoin(
+                MasterBrand, MasterModel.brand_id == MasterBrand.id
+            ).all()
 
         if not results:
             return pd.DataFrame()
@@ -521,6 +558,10 @@ def load_all_auction_lots_df() -> pd.DataFrame:
                 "URL": r.url or ""
             })
         return pd.DataFrame(records)
+    except Exception as e:
+        import logging
+        logging.getLogger("app").error("Failed to load auction lots: %s", str(e))
+        return pd.DataFrame()
     finally:
         db.close()
 
