@@ -1,4 +1,16 @@
 import os
+import sys
+import importlib
+
+# Streamlit Cloud Hot-Reload Guard:
+# Force reload of local modules on code updates to prevent stale sys.modules caching
+for _mod in ["models.database", "models.catalog", "models", "analytics.ml_valuation_model", "analytics.pricing_engine", "analytics.regional_index", "pipeline.scam_detector"]:
+    if _mod in sys.modules:
+        try:
+            importlib.reload(sys.modules[_mod])
+        except Exception:
+            pass
+
 import time
 import pandas as pd
 import numpy as np
@@ -10,11 +22,23 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from models.database import SessionLocal, init_db
-from models.catalog import (
-    MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
-    AuctionLot, WholesalePriceStats, ListingPriceHistory, VehicleHistoryReport,
-    ListingImageAnalysis, B2BApiClient, ApiUsageLog, UserDealAlert, OfficialMasterCatalog
-)
+
+try:
+    from models.catalog import (
+        MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
+        AuctionLot, WholesalePriceStats, ListingPriceHistory, VehicleHistoryReport,
+        ListingImageAnalysis, B2BApiClient, ApiUsageLog, UserDealAlert, OfficialMasterCatalog
+    )
+except ImportError:
+    import models.catalog
+    importlib.reload(models.catalog)
+    from models.catalog import (
+        MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
+        AuctionLot, WholesalePriceStats, ListingPriceHistory, VehicleHistoryReport,
+        ListingImageAnalysis, B2BApiClient, ApiUsageLog, UserDealAlert
+    )
+    OfficialMasterCatalog = getattr(models.catalog, "OfficialMasterCatalog", None)
+
 from data.seed_master_motor import seed_master_motor_database
 from scrapers.olx_scraper import OLXMotorScraper
 from scrapers.stealth_scraper import StealthMarketplaceScraper
@@ -24,16 +48,6 @@ from pipeline.entity_matcher import EntityMatcher
 from pipeline.provenance import classify_origin
 from analytics.pricing_engine import PricingAnalyticsEngine
 from analytics.regional_index import REGIONAL_PRICE_INDEX, get_all_regions, apply_regional_pricing
-import importlib
-import sys
-
-# Memastikan modul analitik termutakhir saat runtime Streamlit Cloud me-reload tanpa cold restart
-for _mod in ["analytics.ml_valuation_model", "analytics.pricing_engine", "analytics.regional_index", "pipeline.scam_detector"]:
-    if _mod in sys.modules:
-        try:
-            importlib.reload(sys.modules[_mod])
-        except Exception:
-            pass
 
 from analytics.ml_valuation_model import ml_model_v6
 from analytics.certificate_generator import generate_pdf_certificate
