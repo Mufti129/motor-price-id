@@ -1,2 +1,5 @@
 from scrapers.olx_scraper import OLXMotorScraper
-from scrapers.stealth_scraper import StealthMarketplaceScraper
+try:
+    from scrapers.stealth_scraper import StealthMarketplaceScraper
+except ImportError:
+    StealthMarketplaceScraper = None
