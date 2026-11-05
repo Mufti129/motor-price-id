@@ -1,66 +1,76 @@
 {
   "model_version": "v7.0.0-HGB",
   "architecture": "HistGradientBoostingRegressor (target log harga/MSRP) + Quantile HGB P25/P75",
-  "trained_at": "2026-10-14 09:57:08",
+  "trained_at": "2026-11-05 13:19:08",
   "sklearn_version": "1.9.1",
   "data_scope": "live",
-  "dataset_size": 773,
+  "dataset_size": 3396,
   "dataset_origin_counts": {
-    "LIVE_SCRAPED": 773
+    "LIVE_SCRAPED": 3396
   },
-  "training_samples": 618,
-  "test_samples": 155,
-  "r2_score": 0.947,
-  "mae_idr": 2120504.1261,
-  "rmse_idr": 2958027.8279,
-  "mape_pct": 10.4116,
-  "median_ape_pct": 7.4702,
+  "training_samples": 2716,
+  "test_samples": 680,
+  "r2_score": 0.7836,
+  "mae_idr": 3326016.4239,
+  "rmse_idr": 9942591.3887,
+  "mape_pct": 11.9853,
+  "median_ape_pct": 6.9658,
   "baseline_age_median": {
-    "r2_score": 0.9191,
-    "mae_idr": 2831284.0077,
-    "rmse_idr": 3654689.1318,
-    "mape_pct": 14.5192,
-    "median_ape_pct": 9.2132
+    "r2_score": 0.552,
+    "mae_idr": 4886306.7471,
+    "rmse_idr": 14305137.3783,
+    "mape_pct": 18.0968,
+    "median_ape_pct": 11.9834
   },
-  "cross_val_kfold_mean_r2": 0.9522,
-  "cross_val_kfold_std_r2": 0.0095,
-  "cross_val_kfold_mean_mape_pct": 9.2424,
-  "interval_p25_p75_coverage_pct": 41.29,
-  "training_duration_seconds": 314.84,
+  "cross_val_kfold_mean_r2": 0.6057,
+  "cross_val_kfold_std_r2": 0.132,
+  "cross_val_kfold_mean_mape_pct": 12.5907,
+  "interval_p25_p75_coverage_pct": 46.91,
+  "training_duration_seconds": 42.47,
   "feature_importance": {
-    "Usia Unit (Tahun)": 0.6041,
-    "Kapasitas Mesin (CC)": 0.0592,
-    "Merek (Brand)": 0.0868,
-    "Segmen Kendaraan": 0.2498
+    "Usia Unit (Tahun)": 0.4107,
+    "Jarak Tempuh Odometer (KM)": 0.0354,
+    "Kapasitas Mesin (CC)": 0.1012,
+    "Status Legalitas BPKB": 0.0,
+    "Pajak STNK Mati": 0.005,
+    "Status Pajak Tidak Diketahui": 0.0034,
+    "Merek (Brand)": 0.1788,
+    "Segmen Kendaraan": 0.2655
   },
   "active_features": [
     "Usia Unit (Tahun)",
+    "Jarak Tempuh Odometer (KM)",
     "Kapasitas Mesin (CC)",
+    "Status Legalitas BPKB",
+    "Pajak STNK Mati",
+    "Status Pajak Tidak Diketahui",
     "Merek (Brand)",
     "Segmen Kendaraan"
   ],
   "dropped_features": {
-    "Jarak Tempuh Odometer (KM)": "99.9% kosong",
-    "Motor Listrik (EV)": "nilai konstan",
-    "Status Legalitas BPKB": "nilai konstan",
-    "Pajak STNK Mati": "nilai konstan",
-    "Status Pajak Tidak Diketahui": "hampir konstan (99.7% bernilai sama)"
+    "Motor Listrik (EV)": "hampir konstan (99.7% bernilai sama)"
   },
-  "n_brands": 5,
-  "n_variants_unique_msrp": 53,
+  "n_brands": 9,
+  "n_variants_unique_msrp": 116,
   "reference_year": 2026,
   "training_domain": {
     "brands": [
+      "BMW Motorrad",
+      "Harley-Davidson",
       "Honda",
       "Kawasaki",
+      "Piaggio",
+      "Polytron",
       "Suzuki",
       "Vespa (Piaggio)",
       "Yamaha"
     ],
     "segments": [
       "BEBEK_OTHER",
+      "EV",
       "MATIC",
       "MAXI",
+      "MOGE",
       "RETRO_CLASSIC",
       "SPORT",
       "TRAIL_ADV"

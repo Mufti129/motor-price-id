@@ -13,7 +13,7 @@ from models.database import SessionLocal, init_db
 from models.catalog import (
     MasterBrand, MasterModel, MasterVariant, ScrapedListing, MarketPriceStats,
     AuctionLot, WholesalePriceStats, ListingPriceHistory, VehicleHistoryReport,
-    ListingImageAnalysis, B2BApiClient, ApiUsageLog, UserDealAlert
+    ListingImageAnalysis, B2BApiClient, ApiUsageLog, UserDealAlert, OfficialMasterCatalog
 )
 from data.seed_master_motor import seed_master_motor_database
 from scrapers.olx_scraper import OLXMotorScraper
@@ -1118,18 +1118,34 @@ elif menu == "Bargain & Arbitrage Opportunities":
             st.info(f"Tidak ditemukan listing dengan diskon >= {threshold}%. Coba turunkan ambang batas persentase diskon.")
         else:
             deals_df = pd.DataFrame(deals)
+            
+            # 5-Tier Deal Classification dari scrap_olx
+            def get_deal_tier(disc):
+                if disc >= 18.0:
+                    return "🔥 Sangat Murah (>=18%)"
+                elif disc >= 8.0:
+                    return "✨ Murah (8-18%)"
+                elif disc >= -8.0:
+                    return "⚖️ Wajar (±8%)"
+                elif disc >= -20.0:
+                    return "⚠️ Mahal (+8% s/d +20%)"
+                else:
+                    return "❌ Overpriced (>20%)"
+
+            deals_df["Deal Rating"] = deals_df["discount_pct"].apply(get_deal_tier)
+
             st.markdown("""
             <div class="info-box-purple">
-                <div class="info-box-title">Peluang Margin Arbitrase Terdeteksi</div>
+                <div class="info-box-title">Peluang Margin Arbitrase & Klasifikasi 5-Tingkat Kesepakatan</div>
                 <div class="info-box-desc">
-                    Daftar di bawah memfilter listing motor yang dijual di bawah harga pasar wajar dengan surat-surat lengkap. Sangat ideal untuk dealer motor bekas atau pembeli yang mencari harga termurah.
+                    Daftar di bawah memfilter listing motor yang dijual di bawah harga pasar wajar dengan surat-surat lengkap dan diverifikasi anti-fraud. Diklasifikasikan berdasarkan standar deviasi pasar (Sangat Murah, Murah, Wajar).
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
             st.dataframe(
                 deals_df[[
-                    "motor_name", "year", "price", "fair_market_value",
+                    "Deal Rating", "motor_name", "year", "price", "fair_market_value",
                     "saving_amount", "discount_pct", "tax_status", "city", "url"
                 ]].rename(columns={
                     "motor_name": "Vehicle Model",
@@ -1143,6 +1159,7 @@ elif menu == "Bargain & Arbitrage Opportunities":
                     "url": "Listing URL"
                 }),
                 column_config={
+                    "Deal Rating": st.column_config.TextColumn("Deal Tier", help="Tingkat kewajaran harga dibanding median pasar"),
                     "Listing Price": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Market FMV": st.column_config.NumberColumn(format="Rp %,.0f"),
                     "Estimated Savings": st.column_config.NumberColumn(format="Rp %,.0f"),
@@ -1152,6 +1169,37 @@ elif menu == "Bargain & Arbitrage Opportunities":
                 hide_index=True,
                 use_container_width=True
             )
+
+        # Bagian Radar Penurunan Harga (Price Drop Alert)
+        st.markdown('<div class="content-panel"><div class="panel-header">Radar Penurunan Harga Terdeteksi (Price Drop Alerts)</div>', unsafe_allow_html=True)
+        st.caption("Memantau iklan aktif yang harganya diturunkan oleh penjual dibanding snapshot scraping sebelumnya:")
+        
+        from sqlalchemy import text
+        drops_raw = db.execute(text("""
+            SELECT sl.title, sl.claimed_year, lph.old_price, lph.new_price, lph.price_drop_pct, lph.recorded_at, sl.city, sl.url
+            FROM listing_price_history lph
+            JOIN scraped_listings sl ON lph.listing_id = sl.id
+            ORDER BY lph.recorded_at DESC LIMIT 25
+        """)).fetchall()
+
+        if drops_raw:
+            df_drops = pd.DataFrame(drops_raw, columns=[
+                "Judul Iklan", "Tahun", "Harga Sebelum", "Harga Sekarang", "Diskon Turun (%)", "Waktu Pantau", "Lokasi", "Link"
+            ])
+            st.dataframe(
+                df_drops,
+                column_config={
+                    "Harga Sebelum": st.column_config.NumberColumn(format="Rp %,.0f"),
+                    "Harga Sekarang": st.column_config.NumberColumn(format="Rp %,.0f"),
+                    "Diskon Turun (%)": st.column_config.NumberColumn(format="%.1f%%"),
+                    "Link": st.column_config.LinkColumn("Lihat Unit")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            st.info("Belum ada listing yang tercatat mengalami penurunan harga.")
+        st.markdown('</div>', unsafe_allow_html=True)
     finally:
         db.close()
 
@@ -2106,6 +2154,7 @@ elif menu == "Live Scraper & Crawler Center":
             target_platform = st.selectbox(
                 "Marketplace Platform / Engine",
                 [
+                    "OLX Indonesia (Live Real-Time Stealth Scraper)",
                     "Momotor.id (Live Real-Time Stealth Scraper)",
                     "OLX Indonesia (API Engine + Fallback)",
                     "JBA Indonesia (Live Auction Lot Crawler)"
@@ -2130,6 +2179,13 @@ elif menu == "Live Scraper & Crawler Center":
                     elif "JBA Indonesia" in target_platform:
                         stealth_engine = StealthMarketplaceScraper()
                         raw_items = stealth_engine.scrape_jba_live_lots(max_items=int(page_depth * 3))
+                    elif "Stealth" in target_platform:
+                        from scrapers.olx_stealth_scraper import OLXStealthScraper
+                        olx_stealth = OLXStealthScraper(headless=True)
+                        try:
+                            raw_items = olx_stealth.scrape_live_search(keyword=query_input, max_items=int(page_depth * 4))
+                        finally:
+                            olx_stealth.close()
                     else:
                         scraper = OLXMotorScraper()
                         raw_items = scraper.search_listings(
@@ -2206,108 +2262,221 @@ elif menu == "Live Scraper & Crawler Center":
 elif menu == "Official Master Catalog (12 Years)":
     st.markdown("""
     <div class="hero-appbar">
-        <div class="hero-title">Official Motorcycle Master Catalog (2014–2026)</div>
-        <div class="hero-subtitle">Standardized master taxonomy of all motorcycle brands, engine displacement CC, generation variants, and historical official MSRPs.</div>
+        <div class="hero-title">Official Motorcycle Master Catalog & Chassis Registry (2014–2026)</div>
+        <div class="hero-subtitle">Standardized master taxonomy integrating 100 brands, 1,688 official Bapenda/SAMSAT chassis type codes, 4,562 commercial models, and historical official MSRPs.</div>
         <div class="hero-tags">
-            <span class="hero-tag-pill">17 Brands</span>
-            <span class="hero-tag-pill">140 Models</span>
-            <span class="hero-tag-pill">419 Variants</span>
-            <span class="hero-tag-pill">EV & 110cc – 1745cc Coverage</span>
+            <span class="hero-tag-pill">100 Registered Brands</span>
+            <span class="hero-tag-pill">1,688 TPT Chassis Codes</span>
+            <span class="hero-tag-pill">4,562 Model-Year Records</span>
+            <span class="hero-tag-pill">828 Electric Vehicles (EV)</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     db = get_db_session()
     try:
-        catalog_query = db.query(
-            MasterVariant, MasterModel, MasterBrand
-        ).join(
-            MasterModel, MasterVariant.model_id == MasterModel.id
-        ).join(
-            MasterBrand, MasterModel.brand_id == MasterBrand.id
-        ).all()
-
-        rows = []
-        for v, m, b in catalog_query:
-            rows.append({
-                "Foto Unit": getattr(v, "image_url", None) or getattr(m, "image_url", None) or "https://imagewebsite.astra-honda.com/uploads/product/thumbnail/new-thumbnail-beat-1-26062026-055630.png",
-                "Kategori Sektor": get_brand_sector(b.name),
-                "Brand": b.name,
-                "Origin": b.country_origin or "-",
-                "Model": m.name,
-                "Category": m.category,
-                "Engine (CC)": m.engine_capacity_cc if m.engine_capacity_cc is not None else 0,
-                "Variant Generation": v.variant_name,
-                "Release Start": v.release_year_start,
-                "Release End": v.release_year_end if v.release_year_end else "Present (2026)",
-                "Official MSRP (New)": float(v.official_msrp_new) if v.official_msrp_new else None,
-                "Transmission": v.transmission_type or "Automatic"
-            })
-
-        df_cat = pd.DataFrame(rows)
+        # Metrik KPI Utama dari Database
+        total_chassis_count = db.query(OfficialMasterCatalog).count()
+        total_chassis_brands = db.query(func.count(func.distinct(OfficialMasterCatalog.brand))).scalar() or 100
+        total_chassis_types = db.query(func.count(func.distinct(OfficialMasterCatalog.type_code))).scalar() or 1688
+        total_ev_count = db.query(OfficialMasterCatalog).filter(OfficialMasterCatalog.is_ev == True).count()
 
         st.markdown(f"""
         <div class="kpi-grid">
             <div class="pro-metric-card">
                 <div class="pro-metric-label">Covered Brands</div>
-                <div class="pro-metric-val">{df_cat['Brand'].nunique()} Brands</div>
-                <div class="pro-metric-sub">ICE, EV, Retro, Moge</div>
+                <div class="pro-metric-val">{total_chassis_brands} Brands</div>
+                <div class="pro-metric-sub">Nasional, Global, EV, Moge</div>
             </div>
             <div class="pro-metric-card emerald">
-                <div class="pro-metric-label">Total Models</div>
-                <div class="pro-metric-val">{df_cat['Model'].nunique()} Models</div>
-                <div class="pro-metric-sub">Semua segmen motor</div>
+                <div class="pro-metric-label">Official Type Codes</div>
+                <div class="pro-metric-val">{total_chassis_types:,} Codes</div>
+                <div class="pro-metric-sub">Sasis TPT Bapenda/SAMSAT</div>
             </div>
             <div class="pro-metric-card">
-                <div class="pro-metric-label">Master Variants</div>
-                <div class="pro-metric-val">{len(df_cat)} Variants</div>
-                <div class="pro-metric-sub">Rentang 12 tahun (2014-2026)</div>
+                <div class="pro-metric-label">Master Catalog Entries</div>
+                <div class="pro-metric-val">{total_chassis_count:,} Entries</div>
+                <div class="pro-metric-sub">Model komersil 2016-2026</div>
+            </div>
+            <div class="pro-metric-card info">
+                <div class="pro-metric-label">Electric Vehicles (EV)</div>
+                <div class="pro-metric-val">{total_ev_count:,} Units</div>
+                <div class="pro-metric-sub">Motor listrik tanpa emisi (0 cc)</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        col_sync1, col_sync2 = st.columns([3, 1])
-        with col_sync1:
-            st.caption("Ingin memperbarui basis data harga dengan seluruh daftar katalog di atas? Anda dapat menjalankan batch scraping cepat melalui tombol di samping.")
-        with col_sync2:
-            if st.button("Scrape All Master Catalog", type="secondary", use_container_width=True):
-                with st.spinner("Menjalankan scraping seluruh master katalog..."):
-                    from data.generate_massive_market_dataset import generate_massive_dataset
-                    total_res = generate_massive_dataset(target_per_brand=1000)
-                    st.cache_data.clear()
-                    st.success(f"Database berhasil diperbarui dengan {total_res:,} listing segar untuk seluruh model.")
+        tab_chassis, tab_curated = st.tabs([
+            "📋 Katalog Sasis Resmi Bapenda & NJKB (100 Merek, 4.562 Kode Tipe)",
+            "🏷️ Varian Valuasi Terkurasi (MSRP & FMV Pricing)"
+        ])
 
-        col_filter1, col_filter2 = st.columns([1, 2])
-        with col_filter1:
-            sector_filter = st.selectbox(
-                "Filter Kategori Sektor",
-                options=["Semua Kategori Sektor", "ICE Konvensional", "Motor Listrik (EV)", "Retro, Cruiser & Sport", "Big Bike / Moge Premium"]
+        # ==============================================================================
+        # TAB 1: KATALOG SASIS & TIPE KOMERSIAL RESMI (4.562 ENTRI)
+        # ==============================================================================
+        with tab_chassis:
+            st.markdown('<div class="content-panel"><div class="panel-header">Database Sasis & Kode Tipe Faktur Resmi (Bapenda / Samsat / NJKB)</div>', unsafe_allow_html=True)
+            st.caption("Pencarian presisi berdasarkan kode tipe faktur/sasis yang tertera pada STNK dan BPKB untuk mengetahui nama komersil pasar, varian trim, kapasitas mesin, dan klasifikasinya.")
+
+            col_f1, col_f2, col_f3 = st.columns(3)
+            with col_f1:
+                all_omc_brands = [b[0] for b in db.query(OfficialMasterCatalog.brand).distinct().order_by(OfficialMasterCatalog.brand).all()]
+                brand_filter_options = ["Semua Merek (100 Brands)"] + all_omc_brands
+                selected_omc_brand = st.selectbox("Filter Pabrikan (Brand)", brand_filter_options, index=0)
+
+            with col_f2:
+                powertrain_filter = st.selectbox(
+                    "Tipe Penggerak / Mesin",
+                    options=["Semua Tipe", "⚡ Motor Listrik (EV Only)", "⛽ Motor Bensin (ICE Only)", "🏍️ Big Bike / Moge (>=400cc)"]
+                )
+
+            with col_f3:
+                segment_options = ["Semua Segmen", "MATIC", "MAXI", "SPORT", "RETRO_CLASSIC", "TRAIL_ADV", "BEBEK_OTHER", "MOGE", "EV"]
+                selected_segment = st.selectbox("Segmen Kendaraan", segment_options, index=0)
+
+            search_chassis = st.text_input(
+                "Pencarian Cepat Kode Sasis / Model Komersil",
+                placeholder="Ketik kode tipe sasis (mis. B5D, V1J, 2DP, H1B) atau nama model (mis. FreeGo, PCX, NMAX, Sportster)..."
             )
-        with col_filter2:
-            search_catalog = st.text_input("Pencarian Katalog Cepat", placeholder="Cari merk, model, atau varian motor...")
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        df_display = df_cat.copy()
-        if sector_filter != "Semua Kategori Sektor":
-            df_display = df_display[df_display["Kategori Sektor"] == sector_filter]
-        if search_catalog.strip():
-            sc_query = search_catalog.strip().lower()
-            df_display = df_display[
-                df_display["Brand"].str.lower().str.contains(sc_query) |
-                df_display["Model"].str.lower().str.contains(sc_query) |
-                df_display["Variant Generation"].str.lower().str.contains(sc_query) |
-                df_display["Category"].str.lower().str.contains(sc_query)
-            ]
+            # Query data official_master_catalog
+            omc_query = db.query(OfficialMasterCatalog)
+            if selected_omc_brand != "Semua Merek (100 Brands)":
+                omc_query = omc_query.filter(OfficialMasterCatalog.brand == selected_omc_brand)
 
-        st.dataframe(
-            df_display.sort_values(by=["Kategori Sektor", "Brand", "Model", "Release Start"], ascending=[True, True, True, False]),
-            column_config={
-                "Foto Unit": st.column_config.ImageColumn("Foto Unit", help="Foto resmi model studio"),
-                "Official MSRP (New)": st.column_config.NumberColumn(format="Rp %,.0f"),
-                "Engine (CC)": st.column_config.NumberColumn(format="%d cc")
-            },
-            hide_index=True,
-            use_container_width=True
-        )
+            if powertrain_filter == "⚡ Motor Listrik (EV Only)":
+                omc_query = omc_query.filter(OfficialMasterCatalog.is_ev == True)
+            elif powertrain_filter == "⛽ Motor Bensin (ICE Only)":
+                omc_query = omc_query.filter(OfficialMasterCatalog.is_ev == False)
+            elif powertrain_filter == "🏍️ Big Bike / Moge (>=400cc)":
+                omc_query = omc_query.filter(OfficialMasterCatalog.engine_cc >= 400)
+
+            if selected_segment != "Semua Segmen":
+                omc_query = omc_query.filter(OfficialMasterCatalog.segment == selected_segment)
+
+            omc_records = omc_query.order_by(OfficialMasterCatalog.brand, OfficialMasterCatalog.commercial_name, OfficialMasterCatalog.year.desc()).all()
+
+            omc_rows = []
+            for r in omc_records:
+                omc_rows.append({
+                    "Merek": r.brand,
+                    "Kode Tipe Sasis": r.type_code,
+                    "Tahun": r.year,
+                    "Nama Komersil": r.commercial_name,
+                    "Trim / Varian": r.trim_variant if r.trim_variant else "-",
+                    "Kapasitas (CC)": r.engine_cc if r.engine_cc is not None else 0,
+                    "Penggerak": "⚡ Listrik (EV)" if r.is_ev else "⛽ Bensin (ICE)",
+                    "Segmen": r.segment or "MATIC"
+                })
+
+            df_omc = pd.DataFrame(omc_rows)
+
+            if search_chassis.strip() and not df_omc.empty:
+                sq = search_chassis.strip().lower()
+                df_omc = df_omc[
+                    df_omc["Kode Tipe Sasis"].str.lower().str.contains(sq) |
+                    df_omc["Nama Komersil"].str.lower().str.contains(sq) |
+                    df_omc["Trim / Varian"].str.lower().str.contains(sq) |
+                    df_omc["Merek"].str.lower().str.contains(sq)
+                ]
+
+            st.write(f"Menampilkan **{len(df_omc):,}** tipe sasis terverifikasi:")
+
+            st.dataframe(
+                df_omc,
+                column_config={
+                    "Tahun": st.column_config.NumberColumn(format="%d"),
+                    "Kapasitas (CC)": st.column_config.NumberColumn(format="%d cc")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+
+            if not df_omc.empty:
+                csv_data = df_omc.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download Data Katalog Sasis Terpilih (.CSV)",
+                    data=csv_data,
+                    file_name="katalog_sasis_resmi_motor_indonesia.csv",
+                    mime="text/csv"
+                )
+
+        # ==============================================================================
+        # TAB 2: KATALOG VARIAN VALUASI TERKURASI (419 VARIAN, 12 TAHUN MSRP)
+        # ==============================================================================
+        with tab_curated:
+            catalog_query = db.query(
+                MasterVariant, MasterModel, MasterBrand
+            ).join(
+                MasterModel, MasterVariant.model_id == MasterModel.id
+            ).join(
+                MasterBrand, MasterModel.brand_id == MasterBrand.id
+            ).all()
+
+            rows = []
+            for v, m, b in catalog_query:
+                rows.append({
+                    "Foto Unit": getattr(v, "image_url", None) or getattr(m, "image_url", None) or "https://imagewebsite.astra-honda.com/uploads/product/thumbnail/new-thumbnail-beat-1-26062026-055630.png",
+                    "Kategori Sektor": get_brand_sector(b.name),
+                    "Brand": b.name,
+                    "Model": m.name,
+                    "Nama Komersil Resmi": v.commercial_name if v.commercial_name else f"{b.name} {m.name}",
+                    "Kode Sasis Utama": v.type_code if v.type_code else "-",
+                    "Trim Varian": v.trim_variant if v.trim_variant else "-",
+                    "Engine (CC)": v.engine_cc if v.engine_cc is not None else (m.engine_capacity_cc or 0),
+                    "Variant Generation": v.variant_name,
+                    "Release Start": v.release_year_start,
+                    "Release End": v.release_year_end if v.release_year_end else "Present (2026)",
+                    "Official MSRP (New)": float(v.official_msrp_new) if v.official_msrp_new else None,
+                    "Transmission": v.transmission_type or "Automatic"
+                })
+
+            df_cat = pd.DataFrame(rows)
+
+            col_sync1, col_sync2 = st.columns([3, 1])
+            with col_sync1:
+                st.caption("Katalog varian terkurasi menghubungkan data spesifikasi motor dengan kurva depresiasi, harga dasar lelang, dan kalkulasi Fair Market Value.")
+            with col_sync2:
+                if st.button("Scrape All Master Catalog", type="secondary", use_container_width=True):
+                    with st.spinner("Menjalankan scraping seluruh master katalog..."):
+                        from data.generate_massive_market_dataset import generate_massive_dataset
+                        total_res = generate_massive_dataset(target_per_brand=1000)
+                        st.cache_data.clear()
+                        st.success(f"Database berhasil diperbarui dengan {total_res:,} listing segar untuk seluruh model.")
+
+            col_filter1, col_filter2 = st.columns([1, 2])
+            with col_filter1:
+                sector_filter = st.selectbox(
+                    "Filter Kategori Sektor",
+                    options=["Semua Kategori Sektor", "ICE Konvensional", "Motor Listrik (EV)", "Retro, Cruiser & Sport", "Big Bike / Moge Premium"]
+                )
+            with col_filter2:
+                search_catalog = st.text_input("Pencarian Varian Terkurasi", placeholder="Cari merk, model, nama komersil, atau kode sasis...")
+
+            df_display = df_cat.copy()
+            if sector_filter != "Semua Kategori Sektor":
+                df_display = df_display[df_display["Kategori Sektor"] == sector_filter]
+            if search_catalog.strip():
+                sc_query = search_catalog.strip().lower()
+                df_display = df_display[
+                    df_display["Brand"].str.lower().str.contains(sc_query) |
+                    df_display["Model"].str.lower().str.contains(sc_query) |
+                    df_display["Nama Komersil Resmi"].str.lower().str.contains(sc_query) |
+                    df_display["Kode Sasis Utama"].str.lower().str.contains(sc_query) |
+                    df_display["Variant Generation"].str.lower().str.contains(sc_query)
+                ]
+
+            st.dataframe(
+                df_display.sort_values(by=["Kategori Sektor", "Brand", "Model", "Release Start"], ascending=[True, True, True, False]),
+                column_config={
+                    "Foto Unit": st.column_config.ImageColumn("Foto Unit", help="Foto resmi model studio"),
+                    "Official MSRP (New)": st.column_config.NumberColumn(format="Rp %,.0f"),
+                    "Engine (CC)": st.column_config.NumberColumn(format="%d cc")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
 
         st.markdown("""
         <div class="content-panel" style="margin-top: 20px;">

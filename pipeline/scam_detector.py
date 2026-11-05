@@ -35,6 +35,65 @@ class ScamAndDPDetector:
         r"\b(?:dp|uang\s*muka|tanda\s*jadi)\s*[:=]?\s*(?:rp\.?\s*)?(\d+(?:[\.,]\d+)*)\s*(jt|juta|rb|ribu|k)?\b"
     )
 
+    WTB_PATTERNS = [
+        r"\bmenerima dan membeli\b",
+        r"\bdicari\b",
+        r"\bwant to buy\b",
+        r"\bwtb\b",
+        r"\bkami membeli\b",
+        r"\bsiap beli\b",
+        r"\bmau\s*beli\b",
+        r"\bcari\s*(?:motor|mobil)\b",
+        r"\bbeli\s*(?:motor|mobil)\b",
+    ]
+
+    ACCESSORY_BLACKLIST = [
+        r"\bvelg\s*saja\b",
+        r"\bknalpot\s*saja\b",
+        r"\bmesin\s*saja\b",
+        r"\brangka\s*saja\b",
+        r"\bstnk\s*saja\b",
+        r"\bbpkb\s*saja\b",
+        r"\bjasa\s*towing\b",
+        r"\bjasa\s*inspeksi\b",
+        r"\bsewa\s*(?:motor|mobil)\b",
+        r"\brental\s*(?:motor|mobil)\b",
+    ]
+
+    DUMMY_PRICE_PREFIXES = ("12345", "11111", "99999", "88888", "77777")
+
+    @staticmethod
+    def sanitize_fuel_mentions(text: str) -> str:
+        """Menghilangkan penyebutan jenis bahan bakar (mis. Pertamax Turbo) agar tidak salah deteksi model Turbo."""
+        if not text:
+            return ""
+        return re.sub(r"\bpertamax\s*turbo\b", "", text, flags=re.IGNORECASE).strip()
+
+    @staticmethod
+    def detect_vehicle_docs_and_tax(docs_field: str = "", title: str = "", description: str = "") -> Dict[str, Any]:
+        """Deteksi kelengkapan surat (BPKB, STNK, Faktur) & status pajak dari field OLX + deskripsi."""
+        combined = f"{docs_field or ''} {title or ''} {description or ''}".lower()
+        surat_lengkap = bool(
+            re.search(r"\b(surat\s*2?\s*(lengkap|komplit|kumplit)|ss\s*(lengkap|komplit)|dokumen\s*lengkap)\b", combined)
+        )
+        bpkb = 1 if ("bpkb" in (docs_field or "").lower() or "bpkb" in combined or surat_lengkap) else 0
+        stnk = 1 if ("stnk" in (docs_field or "").lower() or "stnk" in combined or surat_lengkap) else 0
+        faktur = 1 if ("faktur" in (docs_field or "").lower() or "faktur" in combined) else 0
+
+        if re.search(r"\bpajak\s*(mati|off|telat|lewat|tidur)\b", combined):
+            pajak_status = "Mati / Telat"
+        elif re.search(r"\bpajak\s*(hidup|on|panjang|jalan|aktif|baru)\b", combined):
+            pajak_status = "Hidup / Aktif"
+        else:
+            pajak_status = "Tidak Disebut"
+
+        return {
+            "bpkb": bpkb,
+            "stnk": stnk,
+            "faktur": faktur,
+            "pajak_status": pajak_status,
+        }
+
     @staticmethod
     def min_retention_ratio(age: int) -> float:
         """
@@ -83,18 +142,36 @@ class ScamAndDPDetector:
         age = (current_year - claimed_year) if claimed_year else None
         msrp = float(expected_market_msrp) if expected_market_msrp else None
 
-        # 2. Batas absolut
+        # 1. Filter angka pancingan repetitif (12345, 99999, dll)
+        price_str = str(int(price))
+        if price_str.startswith(cls.DUMMY_PRICE_PREFIXES):
+            return {"is_invalid": True, "code": "DUMMY_PRICE_PATTERN",
+                    "reason": f"Harga angka pancingan/dummy ({price:,.0f})"}
+
+        # 2. Filter iklan WTB / pencari barang
+        for wtb in cls.WTB_PATTERNS:
+            if re.search(wtb, title_l) or re.search(wtb, combined_text[:160]):
+                return {"is_invalid": True, "code": "WTB_BUYER_LISTING",
+                        "reason": f"Iklan pencari barang / WTB ('{wtb}')"}
+
+        # 3. Filter blacklist aksesoris / sparepart / jasa
+        for acc in cls.ACCESSORY_BLACKLIST:
+            if re.search(acc, title_l):
+                return {"is_invalid": True, "code": "ACCESSORY_OR_SERVICE_ONLY",
+                        "reason": f"Bukan unit motor utuh, terdeteksi aksesoris/jasa ('{acc}')"}
+
+        # 4. Batas absolut
         if price > cls.ABSOLUTE_MAX_PRICE:
             return {"is_invalid": True, "code": "PRICE_ABSURD",
                     "reason": f"Harga tidak masuk akal ({price:,.0f}), indikasi salah input / nomor telepon"}
 
-        # 3. Frasa DP eksplisit dengan nominal sama dengan harga listing
+        # 5. Frasa DP eksplisit dengan nominal sama dengan harga listing
         dp_amount = cls._parse_dp_amount(combined_text)
         if dp_amount and abs(dp_amount - price) <= max(100_000.0, price * 0.10):
             return {"is_invalid": True, "code": "DP_AMOUNT_MATCH",
                     "reason": f"Harga listing sama dengan nominal DP di teks ({dp_amount:,.0f})"}
 
-        # 4. Kata kunci DP/Kredit di judul + harga murah
+        # 6. Kata kunci DP/Kredit di judul + harga murah
         if price < cls.DP_KEYWORD_PRICE_CEILING:
             for pat in DP_SCAM_PATTERNS:
                 if re.search(pat, title_l):
@@ -103,7 +180,7 @@ class ScamAndDPDetector:
                                 "reason": f"Mengandung kata kunci DP/Kredit di judul: '{pat}' dengan harga rendah"}
                     break
 
-        # 5. Validasi rasio terhadap MSRP resmi
+        # 7. Validasi rasio terhadap MSRP resmi
         if msrp:
             if price > msrp * cls.MAX_PRICE_TO_MSRP_RATIO:
                 return {"is_invalid": True, "code": "PRICE_ABOVE_MSRP",
@@ -116,7 +193,7 @@ class ScamAndDPDetector:
                 return {"is_invalid": True, "code": "PRICE_BELOW_AGE_FLOOR",
                         "reason": f"Harga {price:,.0f} di bawah batas wajar usia {eff_age} th ({floor:,.0f}){suffix}"}
 
-        # 6. Tanpa MSRP (atau lolos MSRP): batas absolut bawah
+        # 8. Tanpa MSRP (atau lolos MSRP): batas absolut bawah
         if price < cls.MIN_PLAUSIBLE_CASH_PRICE:
             return {"is_invalid": True, "code": "PRICE_BELOW_MIN",
                     "reason": f"Harga di bawah {cls.MIN_PLAUSIBLE_CASH_PRICE:,.0f} (indikasi DP / clickbait / rongsokan)"}

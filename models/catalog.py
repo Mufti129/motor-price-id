@@ -44,11 +44,38 @@ class MasterVariant(Base):
     transmission_type = Column(String(20), default="Automatic") # Automatic, Manual, Semi-Auto
     image_url = Column(Text, nullable=True) # URL foto spesifik varian
     aliases = Column(Text, nullable=True) # Comma separated search keywords/aliases
+    type_code = Column(String(100), nullable=True, index=True) # Kode Tipe Sasis TPT/Bapenda (e.g. B5D02K29M2 MT, 2DP)
+    commercial_name = Column(String(150), nullable=True, index=True) # Nama Komersil Resmi (e.g. Honda CB150 Verza)
+    trim_variant = Column(String(100), nullable=True) # Varian Trim (e.g. CBS, ABS, Keyless, Connected)
+    engine_cc = Column(Integer, nullable=True) # Kapasitas Mesin CC (0 untuk EV)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     model = relationship("MasterModel", back_populates="variants")
     scraped_listings = relationship("ScrapedListing", back_populates="matched_variant")
     auction_lots = relationship("AuctionLot", back_populates="matched_variant")
+
+
+class OfficialMasterCatalog(Base):
+    """
+    Katalog Master Resmi Sasis & Tipe Kendaraan Bapenda/Samsat NJKB (100 Merek, 4.562 Tipe).
+    Menghubungkan Kode Tipe Faktur/Sasis dengan Nama Komersil, Trim Varian, dan CC Mesin.
+    """
+    __tablename__ = "official_master_catalog"
+
+    id = Column(Integer, primary_key=True, index=True)
+    brand = Column(String(100), nullable=False, index=True)
+    type_code = Column(String(120), nullable=False, index=True)
+    year = Column(Integer, nullable=False, index=True)
+    vehicle_category = Column(String(50), default="Sepeda Motor")
+    commercial_name = Column(String(150), nullable=False, index=True)
+    trim_variant = Column(String(100), nullable=True)
+    engine_cc = Column(Integer, nullable=True)
+    is_ev = Column(Boolean, default=False, index=True)
+    segment = Column(String(50), nullable=True)
+    matched_variant_id = Column(Integer, ForeignKey("master_variants.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    matched_variant = relationship("MasterVariant", backref="official_catalog_entries")
 
 
 class ScrapedListing(Base):
