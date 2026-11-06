@@ -395,11 +395,13 @@ def main():
 
     # Simpan File Hasil ke Folder Pemetaan User dan Repo
     target_paths = [
+        "/Users/macbookair/Downloads/tarikan_harga_olx_momotor_siap_petakan.xlsx",
         "/Users/macbookair/Downloads/Pemetaan database motor tarikan dan database internal/tarikan_harga_olx_momotor_siap_petakan.xlsx",
         "/Users/macbookair/Documents/Scrape Data/data/reports/tarikan_harga_olx_momotor_siap_petakan.xlsx"
     ]
 
     csv_paths = [
+        "/Users/macbookair/Downloads/tarikan_harga_olx_momotor_siap_petakan.csv",
         "/Users/macbookair/Downloads/Pemetaan database motor tarikan dan database internal/tarikan_harga_olx_momotor_siap_petakan.csv",
         "/Users/macbookair/Documents/Scrape Data/data/reports/tarikan_harga_olx_momotor_siap_petakan.csv"
     ]
@@ -419,8 +421,14 @@ def main():
 
     db.close()
     print("=" * 80)
-    print("🎉 SELESAI! Seluruh data tarikan harga dan matriks siap dipetakan.")
+    print("🎉 Ekstraksi selesai! Menjalankan sinkronisasi ke pemetaan_tipe_motor_internal_vs_tarikan.xlsx...")
     print("=" * 80)
+
+    try:
+        from scripts.integrate_fmv_to_pemetaan_excel import main as sync_pemetaan
+        sync_pemetaan()
+    except Exception as e:
+        print(f"[Sync Warning] {e}")
 
 if __name__ == "__main__":
     main()
