@@ -144,6 +144,8 @@ class MomotorScraper:
                         break
 
                 slug = href.strip('/').split('/')[-1]
+                if not slug or slug.lower() == "undefined":
+                    slug = f"unit_{abs(hash(full_url + title + str(price) + str(odometer_km)))}"
                 external_id = f"momotor_{slug}"
 
                 extracted_items.append({
