@@ -121,10 +121,12 @@ class OLXStealthScraper:
 
         # Ekstraksi judul
         title = ""
+        title_elem = None
         for sel in ['h1[data-aut-id="itemTitle"]', 'h1', 'div[data-aut-id="itemTitle"]']:
             elems = self.driver.find_elements(By.CSS_SELECTOR, sel)
             if elems and elems[0].text.strip():
                 title = elems[0].text.strip()
+                title_elem = elems[0]
                 break
 
         if not title:
@@ -142,12 +144,34 @@ class OLXStealthScraper:
         except Exception:
             pass
 
-        # Ekstraksi harga
+        # Ekstraksi harga: Cari dari container/section yang sama dengan judul untuk menghindari carousel iklan lain
         price = None
-        for sel in ['span[data-aut-id="itemPrice"]', 'h2[data-aut-id="itemPrice"]', 'span[class*="price"]']:
-            elems = self.driver.find_elements(By.CSS_SELECTOR, sel)
-            if elems:
-                price = self._clean_price(elems[0].text)
+        if title_elem:
+            p_curr = title_elem
+            for _ in range(4):
+                try:
+                    p_curr = p_curr.find_element(By.XPATH, "..")
+                    p_elems = p_curr.find_elements(By.CSS_SELECTOR, 'span[data-aut-id="itemPrice"], h2[data-aut-id="itemPrice"], span[class*="price"]')
+                    if p_elems:
+                        for pe in p_elems:
+                            cand = self._clean_price(pe.text)
+                            if cand and cand >= 1000000:
+                                price = cand
+                                break
+                    if price:
+                        break
+                except Exception:
+                    break
+
+        if not price:
+            for sel in ['span[data-aut-id="itemPrice"]', 'h2[data-aut-id="itemPrice"]', 'span[class*="price"]']:
+                elems = self.driver.find_elements(By.CSS_SELECTOR, sel)
+                if elems:
+                    for pe in elems:
+                        cand = self._clean_price(pe.text)
+                        if cand and cand >= 1000000:
+                            price = cand
+                            break
                 if price:
                     break
 
